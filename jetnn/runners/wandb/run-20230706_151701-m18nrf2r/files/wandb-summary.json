@@ -1,0 +1,1 @@
+{"lr-SGD": 0.003333333333333333, "trainer/global_step": 119, "_timestamp": 1688649469.778688, "_runtime": 48.611445903778076, "_step": 23, "train/loss": 5.4047040939331055, "train/f1": 0.16129031777381897, "train/precision": 0.2777777910232544, "train/recall": 0.11363636702299118, "epoch": 0, "_wandb": {"runtime": 49}}

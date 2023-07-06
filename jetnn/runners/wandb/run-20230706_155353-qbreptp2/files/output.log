@@ -1,0 +1,213 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+/home/tim/anaconda3/envs/JetNN/lib/python3.11/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:613: UserWarning: Checkpoint directory /home/tim/JetNN/jetnn/runners/wandb/run-20230706_155353-qbreptp2/files exists and is not empty.
+  rank_zero_warn(f"Checkpoint directory {dirpath} exists and is not empty.")
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [6]
+  | Name     | Type                           | Params
+------------------------------------------------------------
+0 | _encoder | MethodNameMyTransformerEncoder | 51.0 M
+1 | _decoder | MethodNameTransformerDecoder   | 85.2 M
+2 | _metrics | MetricCollection               | 0
+3 | _loss    | SequenceCrossEntropyLoss       | 0
+------------------------------------------------------------
+136 M     Trainable params
+0         Non-trainable params
+136 M     Total params
+544.435   Total estimated model params size (MB)
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 19400/19400 [00:00<00:00, 289726.86it/s]
+  0%|                                                                                                                                                                                                                                                 | 0/19400 [00:00<?, ?it/s]
+/home/tim/anaconda3/envs/JetNN/lib/python3.11/site-packages/torch/nn/modules/transformer.py:296: UserWarning: The PyTorch API of nested tensors is in prototype stage and will change in the near future. (Triggered internally at ../aten/src/ATen/NestedTensorImpl.cpp:177.)s]
+Sanity Checking DataLoader 0: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00<00:00,  2.04it/s]
+val
+---------------
+loss = 10.97
+f1 = 0.0
+precision = 0.0
+recall = 0.0
+chrf = 5.93
+/home/tim/anaconda3/envs/JetNN/lib/python3.11/site-packages/torch/nn/functional.py:4999: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+/home/tim/anaconda3/envs/JetNN/lib/python3.11/site-packages/torch/nn/modules/activation.py:1160: UserWarning: Converting mask without torch.bool dtype to bool; this will negatively affect performance. Prefer to use a boolean mask directly. (Triggered internally at ../aten/src/ATen/native/transformers/attention.cpp:150.)
+  return torch._native_multi_head_attention(
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 165300/165300 [00:00<00:00, 369635.19it/s]
+Epoch 0:   0%|                                                                                                                                                                                             | 3/11545 [00:01<1:34:42,  2.03it/s, loss=10.4, v_num=ptp2, f1=0.000]
+/home/tim/anaconda3/envs/JetNN/lib/python3.11/site-packages/pytorch_lightning/trainer/connectors/logger_connector/result.py:234: UserWarning: You called `self.log('train/precision', ...)` in your `training_step` but the value needs to be floating point. Converting it to torch.float32.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Testing: 0it [00:00, ?it/s]█████████████▎                                                                                                                                                                 | 1619/11545 [04:51<29:48,  5.55it/s, loss=3.81, v_num=ptp2, f1=0.304]
+/home/tim/anaconda3/envs/JetNN/lib/python3.11/site-packages/pytorch_lightning/trainer/call.py:48: UserWarning: Detected KeyboardInterrupt, attempting graceful shutdown...
+  rank_zero_warn("Detected KeyboardInterrupt, attempting graceful shutdown...")
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [6]
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10664/10664 [00:00<00:00, 585537.75it/s]
+Exception ignored in: <function _MultiProcessingDataLoaderIter.__del__ at 0x7f4e8bc68400>                                                                                                                                                             | 0/10664 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/tim/anaconda3/envs/JetNN/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1478, in __del__
+    self._shutdown_workers()
+  File "/home/tim/anaconda3/envs/JetNN/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1437, in _shutdown_workers
+    self._mark_worker_as_unavailable(worker_id, shutdown=True)
+  File "/home/tim/anaconda3/envs/JetNN/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1379, in _mark_worker_as_unavailable
+    assert self._workers_status[worker_id] or (self._persistent_workers and shutdown)
+           ^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_MultiProcessingDataLoaderIter' object has no attribute '_workers_status'
+Exception ignored in atexit callback: <function _MultiProcessingDataLoaderIter._clean_up_worker at 0x7f4e8bc68360>
+Traceback (most recent call last):
+  File "/home/tim/anaconda3/envs/JetNN/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1472, in _clean_up_worker
+    w.join(timeout=_utils.MP_STATUS_CHECK_INTERVAL)
+  File "/home/tim/anaconda3/envs/JetNN/lib/python3.11/multiprocessing/process.py", line 149, in join
+    res = self._popen.wait(timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tim/anaconda3/envs/JetNN/lib/python3.11/multiprocessing/popen_fork.py", line 40, in wait
+    if not wait([self.sentinel], timeout):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tim/anaconda3/envs/JetNN/lib/python3.11/multiprocessing/connection.py", line 930, in wait
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tim/anaconda3/envs/JetNN/lib/python3.11/selectors.py", line 415, in select
+    fd_event_list = self._selector.poll(timeout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt:

@@ -1,0 +1,156 @@
+wandb_version: 1
+
+checkpoint:
+  desc: null
+  value: None
+seed:
+  desc: null
+  value: 7
+progress_bar_refresh_rate:
+  desc: null
+  value: 1
+model:
+  desc: null
+  value:
+    configuration: null
+    encoder: my_transformer
+    decoder: transformer
+    transformer:
+      d_model: 512
+      nhead: 8
+      dropout: 0.1
+      num_layers: 8
+      dim_feedforward: 2048
+    big_bird:
+      d_model: 512
+      nhead: 8
+      dropout: 0.1
+      num_layers: 8
+      dim_feedforward: 2048
+      attention_type: block_sparse
+      block_size: 64
+      num_random_blocks: 3
+    longformer:
+      d_model: 512
+      nhead: 8
+      dropout: 0.1
+      num_layers: 8
+      dim_feedforward: 2048
+      attention_window: 512
+    my_transformer:
+      d_model: 512
+      nhead: 8
+      dropout: 0.1
+      num_layers: 4
+      dim_feedforward: 2048
+data:
+  desc: null
+  value:
+    type: plain_code_ast
+    root: datasets/gradle_new_2048
+    path: ../../pretrained/plain_code.vocab
+    base_tokenizer: microsoft/codebert-base
+    train_new_tokenizer: false
+    max_tokenizer_vocab: 20000
+    max_code_parts: 1024
+    max_label_parts: 7
+    max_subsequence_size: 10
+    max_subsequences_number: 256
+wandb:
+  desc: null
+  value:
+    project: long-context-transformer
+    group: null
+    offline: true
+trainer:
+  desc: null
+  value:
+    gpu: 1
+    n_epochs: 5
+    patience: 10
+    clip_norm: 5
+    teacher_forcing: 1.0
+    val_every_epoch: 1
+    save_every_epoch: 1
+    log_every_n_steps: 10
+optimizer:
+  desc: null
+  value:
+    optimizer: Momentum
+    nesterov: true
+    lr: 0.01
+    weight_decay: 0.0001
+    n_epochs: 10
+    decay_gamma: 0.95
+train:
+  desc: null
+  value:
+    dataloader:
+      batch_size: 16
+      shuffle: true
+      num_workers: 4
+      prefetch_factor: 2
+      pin_memory: true
+      persistent_workers: true
+val:
+  desc: null
+  value:
+    dataloader:
+      batch_size: 16
+      num_workers: 4
+      pin_memory: true
+      persistent_workers: true
+    generation:
+      mrr_k: 1
+      acc_k: 1
+test:
+  desc: null
+  value:
+    dataloader:
+      batch_size: 16
+      num_workers: 4
+      pin_memory: true
+      persistent_workers: true
+    generation:
+      method: greedy
+      gen_check_interval: 9600
+      bandwidth: 5
+      max_steps: 1000
+      mrr_k: 1
+      acc_k: 1
+_wandb:
+  desc: null
+  value:
+    python_version: 3.11.3
+    cli_version: 0.15.4
+    framework: huggingface
+    huggingface_version: 4.30.2
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1688650431.321792
+    t:
+      1:
+      - 1
+      - 9
+      - 11
+      - 49
+      - 55
+      2:
+      - 1
+      - 9
+      - 11
+      - 49
+      - 55
+      3:
+      - 7
+      - 16
+      - 23
+      4: 3.11.3
+      5: 0.15.4
+      6: 4.30.2
+      8:
+      - 5
+    m:
+    - 1: trainer/global_step
+      6:
+      - 3

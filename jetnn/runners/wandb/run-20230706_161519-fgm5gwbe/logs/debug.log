@@ -1,0 +1,28 @@
+2023-07-06 16:15:19,345 INFO    MainThread:4163355 [wandb_setup.py:_flush():76] Current SDK version is 0.15.4
+2023-07-06 16:15:19,345 INFO    MainThread:4163355 [wandb_setup.py:_flush():76] Configure stats pid to 4163355
+2023-07-06 16:15:19,346 INFO    MainThread:4163355 [wandb_setup.py:_flush():76] Loading settings from /home/tim/.config/wandb/settings
+2023-07-06 16:15:19,346 INFO    MainThread:4163355 [wandb_setup.py:_flush():76] Loading settings from /home/tim/JetNN/jetnn/runners/wandb/settings
+2023-07-06 16:15:19,346 INFO    MainThread:4163355 [wandb_setup.py:_flush():76] Loading settings from environment variables: {}
+2023-07-06 16:15:19,346 INFO    MainThread:4163355 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program_relpath': 'jetnn/runners/run_methodnaming.py', 'program': '/home/tim/JetNN/jetnn/runners/run_methodnaming.py'}
+2023-07-06 16:15:19,346 INFO    MainThread:4163355 [wandb_setup.py:_flush():76] Applying login settings: {'api_key': '***REDACTED***'}
+2023-07-06 16:15:19,346 INFO    MainThread:4163355 [wandb_setup.py:_flush():76] Applying login settings: {'api_key': '***REDACTED***'}
+2023-07-06 16:15:19,346 INFO    MainThread:4163355 [wandb_init.py:_log_setup():507] Logging user logs to ./wandb/run-20230706_161519-fgm5gwbe/logs/debug.log
+2023-07-06 16:15:19,346 INFO    MainThread:4163355 [wandb_init.py:_log_setup():508] Logging internal logs to ./wandb/run-20230706_161519-fgm5gwbe/logs/debug-internal.log
+2023-07-06 16:15:19,346 INFO    MainThread:4163355 [wandb_init.py:init():547] calling init triggers
+2023-07-06 16:15:19,347 INFO    MainThread:4163355 [wandb_init.py:init():554] wandb.init called with sweep_config: {}
+config: {'checkpoint': 'None', 'seed': 7, 'progress_bar_refresh_rate': 1, 'model': {'configuration': None, 'encoder': 'my_transformer', 'decoder': 'transformer', 'transformer': {'d_model': 512, 'nhead': 8, 'dropout': 0.1, 'num_layers': 8, 'dim_feedforward': 2048}, 'big_bird': {'d_model': 512, 'nhead': 8, 'dropout': 0.1, 'num_layers': 8, 'dim_feedforward': 2048, 'attention_type': 'block_sparse', 'block_size': 64, 'num_random_blocks': 3}, 'longformer': {'d_model': 512, 'nhead': 8, 'dropout': 0.1, 'num_layers': 8, 'dim_feedforward': 2048, 'attention_window': 512}, 'my_transformer': {'d_model': 512, 'nhead': 8, 'dropout': 0.1, 'num_layers': 4, 'dim_feedforward': 2048}}, 'data': {'type': 'plain_code_ast', 'root': 'datasets/gradle_new_2048', 'path': '../../pretrained/plain_code.vocab', 'base_tokenizer': 'microsoft/codebert-base', 'train_new_tokenizer': False, 'max_tokenizer_vocab': 20000, 'max_code_parts': 1024, 'max_label_parts': 7, 'max_subsequence_size': 10, 'max_subsequences_number': 256}, 'wandb': {'project': 'long-context-transformer', 'group': None, 'offline': False}, 'trainer': {'gpu': 1, 'n_epochs': 5, 'patience': 10, 'clip_norm': 5, 'teacher_forcing': 1.0, 'val_every_epoch': 1, 'save_every_epoch': 1, 'log_every_n_steps': 10}, 'optimizer': {'optimizer': 'Momentum', 'nesterov': True, 'lr': 0.01, 'weight_decay': 0.0001, 'n_epochs': 10, 'decay_gamma': 0.95}, 'train': {'dataloader': {'batch_size': 16, 'shuffle': True, 'num_workers': 4, 'prefetch_factor': 2, 'pin_memory': True, 'persistent_workers': True}}, 'val': {'dataloader': {'batch_size': 16, 'num_workers': 4, 'pin_memory': True, 'persistent_workers': True}, 'generation': {'mrr_k': 1, 'acc_k': 1}}, 'test': {'dataloader': {'batch_size': 16, 'num_workers': 4, 'pin_memory': True, 'persistent_workers': True}, 'generation': {'method': 'greedy', 'gen_check_interval': 9600, 'bandwidth': 5, 'max_steps': 1000, 'mrr_k': 1, 'acc_k': 1}}}
+2023-07-06 16:15:19,347 INFO    MainThread:4163355 [wandb_init.py:init():596] starting backend
+2023-07-06 16:15:19,347 INFO    MainThread:4163355 [wandb_init.py:init():600] setting up manager
+2023-07-06 16:15:19,349 INFO    MainThread:4163355 [backend.py:_multiprocessing_setup():106] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2023-07-06 16:15:19,352 INFO    MainThread:4163355 [wandb_init.py:init():606] backend started and connected
+2023-07-06 16:15:19,508 INFO    MainThread:4163355 [wandb_init.py:init():703] updated telemetry
+2023-07-06 16:15:19,513 INFO    MainThread:4163355 [wandb_init.py:init():736] communicating run to backend with 60.0 second timeout
+2023-07-06 16:15:20,078 INFO    MainThread:4163355 [wandb_run.py:_on_init():2176] communicating current version
+2023-07-06 16:15:20,139 INFO    MainThread:4163355 [wandb_run.py:_on_init():2185] got version response upgrade_message: "wandb version 0.15.5 is available!  To upgrade, please run:\n $ pip install wandb --upgrade"
+
+2023-07-06 16:15:20,140 INFO    MainThread:4163355 [wandb_init.py:init():787] starting run threads in backend
+2023-07-06 16:15:23,712 INFO    MainThread:4163355 [wandb_run.py:_console_start():2155] atexit reg
+2023-07-06 16:15:23,713 INFO    MainThread:4163355 [wandb_run.py:_redirect():2010] redirect: 3
+2023-07-06 16:15:23,713 INFO    MainThread:4163355 [wandb_run.py:_redirect():2075] Wrapping output streams.
+2023-07-06 16:15:23,714 INFO    MainThread:4163355 [wandb_run.py:_redirect():2100] Redirects installed.
+2023-07-06 16:15:23,715 INFO    MainThread:4163355 [wandb_init.py:init():828] run started, returning control to user process
