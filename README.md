@@ -8,3 +8,6 @@
 - [ ] Comment generation
 - [ ] And more...
 
+## How to run
+
+Simply install the dependecies from requirements.txt and then run run_methodnaming.py script from jetnn/runners/ folder.
