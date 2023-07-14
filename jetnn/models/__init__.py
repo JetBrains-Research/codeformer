@@ -1,2 +1,2 @@
-from .decoders import DecoderTransformer, TwoPointerFCN
+from .decoders import TwoPointerFCN
 from .tasks import MethodNamingModel

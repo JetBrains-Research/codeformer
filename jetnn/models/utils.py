@@ -107,6 +107,7 @@ def configure_optimizers_alon(
     :param parameters: model parameters for optimization
     :return: list of optimizers and schedulers
     """
+    print(parameters)
     optimizer: Optimizer
     if optim_config.optimizer == "Momentum":
         # using the same momentum value as in original realization by Alon
@@ -131,42 +132,6 @@ def configure_optimizers_alon(
         )
     scheduler = LinearLR(optimizer, total_iters=optim_config.n_epochs)
     return [optimizer], [scheduler]
-
-
-def generate_block_mask_from_sequence_split(sequence_split, src_sequence_length):
-    result = torch.zeros((src_sequence_length, src_sequence_length), dtype=torch.bool)
-    cur_sum = 0
-    start_tokens = list()
-    for split_size in sequence_split:
-        if split_size == 0:
-            break
-        start_tokens.append(int(cur_sum))
-        result[
-            cur_sum : cur_sum + split_size, cur_sum : cur_sum + split_size
-        ] = torch.ones((split_size, split_size), dtype=torch.bool)
-        cur_sum += split_size
-    for i in start_tokens:
-        result[i][start_tokens] = True
-    return result
-
-
-def generate_block_mask_from_sequences_splits(
-    sequences_splits, src_sequence_shape, nhead
-):
-    """assume that batch_first==True"""
-    src_sequence_length = src_sequence_shape[1]
-    result = [
-        generate_block_mask_from_sequence_split(
-            sequence_split, src_sequence_length
-        ).repeat(nhead, 1, 1)
-        for sequence_split in sequences_splits
-    ]
-    result = torch.stack(result)
-    result_shape = result.shape
-    result = result.reshape(
-        result_shape[0] * result_shape[1], result_shape[2], result_shape[3]
-    )
-    return result
 
 
 def transform_sequence_according_to_split(

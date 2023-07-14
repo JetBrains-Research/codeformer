@@ -5,7 +5,7 @@ from torch.nn import Linear
 from torch.nn.modules.transformer import TransformerEncoder, TransformerEncoderLayer
 from transformers import BigBirdModel, BigBirdConfig
 from jetnn.data_processing.plain_code_ast_method.labeled_plain_code_ast import (
-    BatchedLabeledCodeTokens,
+    BatchedLabeledCodeAstTokens,
 )
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
 from jetnn.models.decoders.transformer_decoder import TokenEmbedding, PositionalEncoding
@@ -55,7 +55,7 @@ class MethodNameMyTransformerEncoder(nn.Module):
             p_sum += split
         return result
 
-    def forward(self, batch: BatchedLabeledCodeTokens) -> Tensor:
+    def forward(self, batch: BatchedLabeledCodeAstTokens) -> Tensor:
         src_sequence = batch.code_tokens
         src_key_padding_mask = src_sequence == self._pad_token
         x = self._positional_encoding(self._embedding(src_sequence))
