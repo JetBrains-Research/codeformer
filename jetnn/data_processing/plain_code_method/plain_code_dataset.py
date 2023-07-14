@@ -12,6 +12,7 @@ from jetnn.data_processing.vocabularies.plain.plain_code_vocabulary import (
     PlainCodeVocabulary,
 )
 from jetnn.data_processing.plain_code_method.labeled_plain_code import LabeledCodeTokens
+from jetnn.data_processing.tree_code_representation.my_code_tree import MyCodeTree
 
 
 class PlainCodeDataset(Dataset):
@@ -21,7 +22,6 @@ class PlainCodeDataset(Dataset):
     def __init__(
         self, data_file: str, config: DictConfig, vocabulary: PlainCodeVocabulary
     ):
-        data_file = os.path.join("..", "..", data_file)
         if not exists(data_file):
             raise ValueError(f"Can't find file with data: {data_file}")
         self._data_file = data_file
@@ -30,6 +30,8 @@ class PlainCodeDataset(Dataset):
 
         self._line_offsets = get_lines_offsets(data_file)
         self._n_samples = len(self._line_offsets)
+        
+        self._code_tree = MyCodeTree()
 
         open(self._log_file, "w").close()
 
@@ -41,7 +43,7 @@ class PlainCodeDataset(Dataset):
             raw_sample = get_line_by_offset(self._data_file, self._line_offsets[index])
             sample = json.loads(raw_sample)
             label = sample["label"].replace(self._separator, " ")
-            cleaned_code = sample["code"]
+            cleaned_code = self._code_tree.remove_comments(sample["code"])
             code = "".join(
                 [
                     (ch if ch not in (punctuation + whitespace) else " ")

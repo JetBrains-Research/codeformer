@@ -6,7 +6,7 @@ progress_bar_refresh_rate: 1
 model:
   configuration:
 
-  encoder: my_transformer
+  encoder: transformer
   decoder: transformer
 
   transformer:
@@ -39,13 +39,13 @@ model:
     dim_feedforward: 2048
 
 data:
-  type: 'plain_code_ast'
-  root: '/home/tim/codeformer/datasets/gradle_new_2048'
+  type: 'plain_code'
+  root: ''
   path: '../../pretrained/plain_code.vocab'
   base_tokenizer: "microsoft/codebert-base"
   train_new_tokenizer: False
   max_tokenizer_vocab: 20000
-  max_code_parts: 2048
+  max_code_parts: 512
   max_label_parts: 7
   max_subsequence_size: 10
   max_subsequences_number: 256
@@ -54,7 +54,7 @@ wandb:
   project: long-context-transformer
   group: null
   offline: false
-  key: "6905db81c078cb7818fd6aead3ee3177689e0dd0"
+  key: ""
 
 trainer:
   gpu: 1

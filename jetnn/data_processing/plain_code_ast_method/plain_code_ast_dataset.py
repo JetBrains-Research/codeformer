@@ -47,8 +47,7 @@ class PlainCodeAstDataset(Dataset):
             raw_sample = get_line_by_offset(self._data_file, self._line_offsets[index])
             sample = json.loads(raw_sample)
             label = sample["label"].replace(self._separator, " ")
-            # cleaned_code = self._code_tree.remove_comments(sample["code"])
-            cleaned_code = sample["code"]
+            cleaned_code = self._code_tree.remove_comments(sample["code"])
             code = "".join(
                 [
                     (ch if ch not in (punctuation + whitespace) else " ")
