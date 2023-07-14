@@ -6,7 +6,7 @@ progress_bar_refresh_rate: 1
 model:
   configuration:
 
-  encoder: big_bird
+  encoder: my_transformer
   decoder: transformer
 
   transformer:
@@ -39,8 +39,8 @@ model:
     dim_feedforward: 2048
 
 data:
-  type: 'plain_code'
-  root: 'datasets/gradle_new_2048'
+  type: 'plain_code_ast'
+  root: 'datasets/plain_code_test'
   path: '../../pretrained/plain_code.vocab'
   base_tokenizer: "microsoft/codebert-base"
   train_new_tokenizer: False
@@ -54,11 +54,12 @@ wandb:
   project: long-context-transformer
   group: null
   offline: false
+  key: "6905db81c078cb7818fd6aead3ee3177689e0dd0"
 
 trainer:
   gpu: 1
-  n_epochs: 5
-  patience: 10
+  n_epochs: 1
+  patience: 1
   clip_norm: 5
   teacher_forcing: 1.0
   val_every_epoch: 1

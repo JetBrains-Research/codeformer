@@ -5,7 +5,7 @@ import torch
 
 
 @dataclass
-class LabeledCodeTokens:
+class LabeledCodeAstTokens:
     label: List[int]
     code: torch.tensor
     num_splits: int
@@ -15,8 +15,8 @@ def transpose(list_of_lists: List[List[int]]) -> List[List[int]]:
     return [cast(List[int], it) for it in zip(*list_of_lists)]
 
 
-class BatchedLabeledCodeTokens:
-    def __init__(self, all_samples: List[Optional[LabeledCodeTokens]]):
+class BatchedLabeledCodeAstTokens:
+    def __init__(self, all_samples: List[Optional[LabeledCodeAstTokens]]):
         samples = [s for s in all_samples if s is not None]
         self._len = len(samples)
         self.label_tokens = torch.tensor(
@@ -28,7 +28,7 @@ class BatchedLabeledCodeTokens:
     def __len__(self) -> int:
         return self._len
 
-    def pin_memory(self) -> "BatchedLabeledCodeTokens":
+    def pin_memory(self) -> "BatchedLabeledCodeAstTokens":
         self.label_tokens.pin_memory()
         self.code_tokens.pin_memory()
         self.batch_split.pin_memory()

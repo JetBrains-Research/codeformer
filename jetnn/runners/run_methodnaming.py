@@ -45,7 +45,7 @@ def train(config: DictConfig):
     else:
         model = MethodNamingModel(config, vocab)
 
-    wandb.login(key="6905db81c078cb7818fd6aead3ee3177689e0dd0")
+    wandb.login(key=config.wandb.key)
     wandb_logger = WandbLogger(
         project=config.wandb.project,
         group=config.wandb.group,
@@ -87,6 +87,7 @@ def train(config: DictConfig):
                 print_epoch_result_callback,
                 progress_bar,
             ],
+            precision=16
         )
     else:
         trainer = Trainer(
@@ -102,7 +103,8 @@ def train(config: DictConfig):
                 checkpoint_callback,
                 print_epoch_result_callback,
                 progress_bar,
-            ],
+            ], 
+            precision=16
         )
 
     trainer.fit(model=model, datamodule=data_module)
@@ -118,9 +120,9 @@ def test(config: DictConfig):
         checkpoint_path=config.checkpoint, config=config, vocab=data_module.vocabulary
     )
     if torch.cuda.is_available():
-        trainer = Trainer(accelerator="gpu", devices=1)
+        trainer = Trainer(accelerator="gpu", devices=1, precision=16)
     else:
-        trainer = Trainer()
+        trainer = Trainer(precision=16)
     trainer.test(model, datamodule=data_module)
 
 

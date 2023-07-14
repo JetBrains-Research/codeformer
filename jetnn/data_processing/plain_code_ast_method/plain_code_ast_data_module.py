@@ -12,8 +12,8 @@ from jetnn.data_processing.vocabularies.plain.plain_code_vocabulary import (
     from_holdout,
 )
 from jetnn.data_processing.plain_code_ast_method.labeled_plain_code_ast import (
-    LabeledCodeTokens,
-    BatchedLabeledCodeTokens,
+    LabeledCodeAstTokens,
+    BatchedLabeledCodeAstTokens,
 )
 from jetnn.data_processing.plain_code_ast_method.plain_code_ast_dataset import (
     PlainCodeAstDataset,
@@ -53,9 +53,9 @@ class PlainCodeAstDataModule(LightningDataModule):
 
     @staticmethod
     def collate_wrapper(
-        batch: List[Optional[LabeledCodeTokens]],
-    ) -> BatchedLabeledCodeTokens:
-        return BatchedLabeledCodeTokens(batch)
+        batch: List[Optional[LabeledCodeAstTokens]],
+    ) -> BatchedLabeledCodeAstTokens:
+        return BatchedLabeledCodeAstTokens(batch)
 
     def _create_dataset(self, holdout_file: str) -> PlainCodeAstDataset:
         if self._vocabulary is None:
@@ -85,7 +85,7 @@ class PlainCodeAstDataModule(LightningDataModule):
         return self.test_dataloader(*args, **kwargs)
 
     def transfer_batch_to_device(
-        self, batch: BatchedLabeledCodeTokens, device: torch.device, dataloader_idx: int
-    ) -> BatchedLabeledCodeTokens:
+        self, batch: BatchedLabeledCodeAstTokens, device: torch.device, dataloader_idx: int
+    ) -> BatchedLabeledCodeAstTokens:
         batch.move_to_device(device)
         return batch

@@ -29,16 +29,16 @@ class MethodNameMyTransformerEncoder(nn.Module):
             dropout=config.dropout,
             batch_first=True,
         )
-        big_bird_config = BigBirdConfig(
-            vocab_size=self._vocab_size,
-            hidden_size=big_bird_config.d_model,
-            num_attention_heads=big_bird_config.nhead,
-            num_hidden_layers=big_bird_config.num_layers,
-            hidden_dropout_prob=big_bird_config.dropout,
-            attention_type=big_bird_config.attention_type,
-            block_size=big_bird_config.block_size,
-            num_random_blocks=big_bird_config.num_random_blocks,
-        )
+        # big_bird_config = BigBirdConfig(
+        #     vocab_size=self._vocab_size,
+        #     hidden_size=big_bird_config.d_model,
+        #     num_attention_heads=big_bird_config.nhead,
+        #     num_hidden_layers=big_bird_config.num_layers,
+        #     hidden_dropout_prob=big_bird_config.dropout,
+        #     attention_type=big_bird_config.attention_type,
+        #     block_size=big_bird_config.block_size,
+        #     num_random_blocks=big_bird_config.num_random_blocks,
+        # )
         self._encoder_1 = TransformerEncoder(encoder_layer, config.num_layers)
         # self._encoder_1 = BigBirdModel(big_bird_config)
         self._linear_1 = Linear(self._max_subsequence_size, 1)
