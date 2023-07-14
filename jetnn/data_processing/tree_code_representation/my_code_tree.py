@@ -113,6 +113,9 @@ class MyCodeTree:
         sequence_split = MyCodeTree._accumulate_ones(sequence_split, max_subtree_size)
         sequence_split = MyCodeTree._split_big_leaves(sequence_split, max_subtree_size)
         return sequence_split
+    
+    def remove_comments(self, code):
+        return self._tree_sitter.remove_comments_from_code(code)
 
     def process_code_random(self, tokens, max_subtree_size):
         result = list()

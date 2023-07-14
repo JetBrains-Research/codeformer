@@ -40,7 +40,7 @@ model:
 
 data:
   type: 'plain_code_ast'
-  root: '/home/tim/codeformer/datasets/plain_code_test'
+  root: '/home/tim/codeformer/datasets/gradle_new_2048'
   path: '../../pretrained/plain_code.vocab'
   base_tokenizer: "microsoft/codebert-base"
   train_new_tokenizer: False
@@ -58,8 +58,8 @@ wandb:
 
 trainer:
   gpu: 1
-  n_epochs: 1
-  patience: 10
+  n_epochs: 5
+  patience: 3
   clip_norm: 5
   teacher_forcing: 1.0
   val_every_epoch: 1
@@ -67,17 +67,17 @@ trainer:
   log_every_n_steps: 10
 
 optimizer:
-  optimizer: "Momentum"
+  optimizer: "AdamW"
   nesterov: true
-  lr: 0.01
-  weight_decay: 0.0001
-  n_epochs: 10
+  lr: 0.001
+  weight_decay: 0.01
+  n_epochs: 3
   decay_gamma: 0.95
 
 train:
 
   dataloader:
-    batch_size: 4
+    batch_size: 16
     shuffle: True
     num_workers: 4
     prefetch_factor: 2
@@ -87,7 +87,7 @@ train:
 val:
 
   dataloader:
-    batch_size: 4
+    batch_size: 16
     num_workers: 4
     pin_memory: True
     persistent_workers: True
@@ -99,7 +99,7 @@ val:
 test:
 
   dataloader:
-    batch_size: 4
+    batch_size: 16
     num_workers: 4
     pin_memory: True
     persistent_workers: True

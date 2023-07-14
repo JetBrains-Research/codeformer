@@ -87,7 +87,6 @@ def train(config: DictConfig):
                 print_epoch_result_callback,
                 progress_bar,
             ],
-            precision=16
         )
     else:
         trainer = Trainer(
@@ -103,8 +102,7 @@ def train(config: DictConfig):
                 checkpoint_callback,
                 print_epoch_result_callback,
                 progress_bar,
-            ], 
-            precision=16
+            ],
         )
 
     trainer.fit(model=model, datamodule=data_module)
@@ -120,14 +118,14 @@ def test(config: DictConfig):
         checkpoint_path=config.checkpoint, config=config, vocab=data_module.vocabulary
     )
     if torch.cuda.is_available():
-        trainer = Trainer(accelerator="gpu", devices=1, precision=16)
+        trainer = Trainer(accelerator="gpu", devices=1)
     else:
-        trainer = Trainer(precision=16)
+        trainer = Trainer()
     trainer.test(model, datamodule=data_module)
 
 
 if __name__ == "__main__":
-    torch.set_float32_matmul_precision("medium")
+    torch.set_float32_matmul_precision('medium')
     arg_parser = ArgumentParser()
     arg_parser.add_argument(
         "mode", help="Mode to run script", choices=["train", "test"]

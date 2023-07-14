@@ -8,9 +8,6 @@ class MyTreeSitter:
         self._p_sum = list()
         self._tree = None
         self._current_node = None
-
-    def init(self):
-        self._init = True
         Language.build_library(
             "tree_sitter_build/my-languages.so",
             ["../vendor/tree-sitter-java"],
@@ -19,15 +16,32 @@ class MyTreeSitter:
         self._parser = Parser()
         self._parser.set_language(java_language)
 
-    def process_code(self, java_code):
-        if not self._init:
-            self.init()
-        code_lines = java_code.split("\n")
+    def process_code(self, code):
+        self._tree = self._parser.parse(bytes(code, "utf8"))
+        self._current_node = self._tree.walk()
+        code_lines = code.split("\n")
         self._p_sum = [0 for _ in range(len(code_lines) + 1)]
         for i in range(1, len(code_lines) + 1):
             self._p_sum[i] = self._p_sum[i - 1] + len(code_lines[i - 1]) + 1
-        self._tree = self._parser.parse(bytes(java_code, "utf8"))
-        self._current_node = self._tree.walk()
+
+    def remove_comments_from_code(self, code):
+        tree = self._parser.parse(bytes(code, "utf8"))
+        root_node = tree.root_node
+        comment_nodes = []
+
+        def walk(node):
+            if 'comment' in node.type.lower(): 
+                comment_nodes.append(node)
+            for child in node.children:
+                walk(child)
+        walk(root_node)
+
+        comment_positions = [(node.start_byte, node.end_byte) for node in comment_nodes]
+        comment_positions.reverse()
+        clean_code = code
+        for start, end in comment_positions:
+            clean_code = clean_code[:start] + clean_code[end:]
+        return clean_code
 
     def get_current_node_start_end(self):
         start_pos = self._p_sum[int(self._current_node.node.start_point[0])] + int(

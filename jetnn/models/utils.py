@@ -7,7 +7,7 @@ from torch import nn, Tensor
 from typing import List, Tuple, Iterable
 from omegaconf import DictConfig
 from torch.optim import Adam, Optimizer, SGD, AdamW
-from torch.optim.lr_scheduler import _LRScheduler, LambdaLR, LinearLR
+from torch.optim.lr_scheduler import LinearLR
 
 
 def generate_padding_mask(src_or_tgt, pad_id, device):
@@ -100,17 +100,9 @@ class TokenEmbedding(nn.Module):
 
 def configure_optimizers_alon(
     optim_config: DictConfig, parameters: Iterable[torch.Tensor]
-) -> Tuple[List[Optimizer], List[_LRScheduler]]:
-    """Create optimizers like in original Alon work
-    https://github.com/tech-srl/code2seq/blob/a01076ef649d298e5f90ac2ce1f6a42f4ff49cc2/model.py#L386-L397
-    :param optim_config: hyper parameters
-    :param parameters: model parameters for optimization
-    :return: list of optimizers and schedulers
-    """
-    print(parameters)
+):
     optimizer: Optimizer
     if optim_config.optimizer == "Momentum":
-        # using the same momentum value as in original realization by Alon
         optimizer = SGD(
             parameters,
             optim_config.lr,

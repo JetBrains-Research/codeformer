@@ -12,7 +12,6 @@ from jetnn.data_processing.vocabularies.plain.plain_code_vocabulary import (
     PlainCodeVocabulary,
 )
 from jetnn.data_processing.plain_code_method.labeled_plain_code import LabeledCodeTokens
-from jetnn.data_processing.utils import remove_comments
 
 
 class PlainCodeDataset(Dataset):
@@ -42,7 +41,7 @@ class PlainCodeDataset(Dataset):
             raw_sample = get_line_by_offset(self._data_file, self._line_offsets[index])
             sample = json.loads(raw_sample)
             label = sample["label"].replace(self._separator, " ")
-            cleaned_code = remove_comments(sample["code"])
+            cleaned_code = sample["code"]
             code = "".join(
                 [
                     (ch if ch not in (punctuation + whitespace) else " ")
