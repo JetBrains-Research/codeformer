@@ -33,7 +33,7 @@ def data_module_by_config(config: DictConfig):
         raise ValueError(f"Unknown data format")
 
 
-def train(config: DictConfig):
+def train(config: DictConfig, cuda_devices):
     params = config.trainer
 
     data_module = data_module_by_config(config)
@@ -79,7 +79,7 @@ def train(config: DictConfig):
             log_every_n_steps=params.log_every_n_steps,
             logger=wandb_logger,
             accelerator="gpu",
-            devices=1,
+            devices=cuda_devices,
             callbacks=[
                 lr_logger,
                 early_stopping_callback,
@@ -109,7 +109,7 @@ def train(config: DictConfig):
     trainer.test(model=model, datamodule=data_module)
 
 
-def test(config: DictConfig):
+def test(config: DictConfig, cuda_devices):
     if config["checkpoint"] == "None":
         raise RuntimeError("Wrong config: No checkpoint path")
 
@@ -118,7 +118,7 @@ def test(config: DictConfig):
         checkpoint_path=config.checkpoint, config=config, vocab=data_module.vocabulary
     )
     if torch.cuda.is_available():
-        trainer = Trainer(accelerator="gpu", devices=1)
+        trainer = Trainer(accelerator="gpu", devices=cuda_devices)
     else:
         trainer = Trainer()
     trainer.test(model, datamodule=data_module)
@@ -133,12 +133,15 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "-c", "--config", help="Path to YAML configuration file", type=str
     )
+    arg_parser.add_argument(
+        "-cd", "--cuda_devices", help="available cuda decices", type=list
+    )
     args = arg_parser.parse_args()
-
+    cuda_devices = [int(cd) for cd in args.cuda_devices]
     config = OmegaConf.load(args.config)
     seed_everything(config.seed)
 
     if args.mode == "train":
-        train(config)
+        train(config, cuda_devices)
     elif args.mode == "test":
-        test(config)
+        test(config, cuda_devices)

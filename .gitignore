@@ -1,0 +1,10 @@
+/test/lightning_logs/
+__pycache__/
+datasets/
+wandb
+projects_data
+tree_code_structure/core/tree-sitter-java
+tree_sitter_build
+bad_samples.log
+.pyc
+configs/
