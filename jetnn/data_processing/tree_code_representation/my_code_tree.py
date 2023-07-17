@@ -86,11 +86,11 @@ class MyCodeTree:
         sys.setrecursionlimit(10000)
 
     @staticmethod
-    def _accumulate_ones(sequence_split, max_subtree_size):
+    def _merge_left(sequence_split, max_subtree_size):
         result = list()
         for split in sequence_split:
-            if split == 1 and len(result) > 0 and result[-1] < max_subtree_size:
-                result[-1] += 1
+            if len(result) > 0 and result[-1] + split <= max_subtree_size:
+                result[-1] += split
             else:
                 result.append(split)
         return result
@@ -110,8 +110,8 @@ class MyCodeTree:
 
     @staticmethod
     def _post_process_sequence_split(sequence_split, max_subtree_size):
-        sequence_split = MyCodeTree._accumulate_ones(sequence_split, max_subtree_size)
         sequence_split = MyCodeTree._split_big_leaves(sequence_split, max_subtree_size)
+        sequence_split = MyCodeTree._merge_left(sequence_split, max_subtree_size)
         return sequence_split
     
     def remove_comments(self, code):
@@ -131,13 +131,13 @@ class MyCodeTree:
         java_code,
         tokens,
         max_subtree_size=16,
-        tokens_process_function=lambda x: x[1:] if len(x) > 1 and x[0] == " " else x,
+        tokens_process_function=lambda x: x,
     ):
         self._tree_sitter.process_code(java_code)
         self._tokens = MyTokens(java_code, tokens, tokens_process_function)
         self._root = self._init_traverse_tree_sitter()
         self._tree_sitter.reset()
-        sequence_split = self.get_sequence_split(None, max_subtree_size)
+        sequence_split = self.get_sequence_split(self._root, max_subtree_size)
         return MyCodeTree._post_process_sequence_split(
             [node.get_num_tokens() for node in sequence_split], max_subtree_size
         )
@@ -159,8 +159,6 @@ class MyCodeTree:
         return node
 
     def get_sequence_split(self, start_node, max_subtree_size):
-        if start_node is None:
-            start_node = self._root
         subtree_split = list()
         if start_node.get_num_tokens() < max_subtree_size:
             subtree_split.append(start_node)

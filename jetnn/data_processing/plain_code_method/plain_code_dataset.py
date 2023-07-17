@@ -44,16 +44,9 @@ class PlainCodeDataset(Dataset):
             sample = json.loads(raw_sample)
             label = sample["label"].replace(self._separator, " ")
             cleaned_code = self._code_tree.remove_comments(sample["code"])
-            code = "".join(
-                [
-                    (ch if ch not in (punctuation + whitespace) else " ")
-                    for ch in cleaned_code
-                ]
-            )
-            code = " ".join(code.split())
             return LabeledCodeTokens(
                 self.tokenize(label, self._config.max_label_parts),
-                self.tokenize(code, self._config.max_code_parts),
+                self.tokenize(cleaned_code, self._config.max_code_parts),
             )
         except ValueError as e:
             with open(self._log_file, "a") as f_out:

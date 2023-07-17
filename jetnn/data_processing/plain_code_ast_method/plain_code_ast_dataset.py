@@ -48,18 +48,11 @@ class PlainCodeAstDataset(Dataset):
             sample = json.loads(raw_sample)
             label = sample["label"].replace(self._separator, " ")
             cleaned_code = self._code_tree.remove_comments(sample["code"])
-            code = "".join(
-                [
-                    (ch if ch not in (punctuation + whitespace) else " ")
-                    for ch in cleaned_code
-                ]
-            )
-            code = " ".join(code.split())
             tokenized_label = self.tokenize(label, self._config.max_label_parts)
-            tokenized_code = self.tokenize(code, self._config.max_code_parts)
+            tokenized_code = self.tokenize(cleaned_code, self._config.max_code_parts)
             tokens = list(
                 filter(
-                    lambda x: x != "<pad>",
+                    lambda x: x != self._vocab.tokenizer.pad_token,
                     [self._vocab.tokenizer.decode(token) for token in tokenized_code],
                 )
             )[1:-1]

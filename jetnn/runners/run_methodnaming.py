@@ -87,6 +87,7 @@ def train(config: DictConfig, cuda_devices):
                 print_epoch_result_callback,
                 progress_bar,
             ],
+            accumulate_grad_batches=7
         )
     else:
         trainer = Trainer(
@@ -103,6 +104,7 @@ def train(config: DictConfig, cuda_devices):
                 print_epoch_result_callback,
                 progress_bar,
             ],
+            accumulate_grad_batches=7
         )
 
     trainer.fit(model=model, datamodule=data_module)

@@ -55,6 +55,9 @@ class MyTreeSitter:
     def get_current_node(self):
         return self._current_node
 
+    def get_start_end_bytes(self):
+        return self._current_node.node.start_byte, self._current_node.node.end_byte
+
     def goto_first_child(self):
         return self._current_node.goto_first_child()
 
