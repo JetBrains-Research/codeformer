@@ -8,7 +8,8 @@ from jetnn.data_processing.plain_code_ast_method.labeled_plain_code_ast import (
     BatchedLabeledCodeAstTokens,
 )
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
-from jetnn.models.decoders.transformer_decoder import TokenEmbedding, PositionalEncoding
+from jetnn.models.util_layers.positional_encoding import PositionalEncodingWithEmbedding
+from jetnn.models.util_layers.embedding import TokenEmbedding
 
 
 class MethodNameMyTransformerEncoder(nn.Module):
@@ -20,7 +21,7 @@ class MethodNameMyTransformerEncoder(nn.Module):
         self._pad_token = vocab.pad_id()
         self._max_subsequence_size = max_subsequence_size
         self._embedding = TokenEmbedding(self._vocab_size, config.d_model)
-        self._positional_encoding = PositionalEncoding(config.d_model, config.dropout)
+        self._positional_encoding = PositionalEncodingWithEmbedding(config.d_model, config.dropout)
         self._device = 'cuda' if torch.cuda.is_available() else 'cpu'
         encoder_layer = TransformerEncoderLayer(
             d_model=config.d_model,

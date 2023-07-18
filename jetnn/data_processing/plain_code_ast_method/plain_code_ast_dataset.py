@@ -74,7 +74,7 @@ class PlainCodeAstDataset(Dataset):
             )
         except ValueError as e:
             with open(self._log_file, "a") as f_out:
-                f_out.write(f"Error parsing sample from line #{index}: {e}")
+                f_out.write(f"Error parsing sample from line #{index}: {e}\n")
             return None
 
     def tokenize(self, text: str, max_parts: int) -> List[int]:

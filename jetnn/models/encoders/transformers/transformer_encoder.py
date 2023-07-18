@@ -7,7 +7,8 @@ from jetnn.data_processing.plain_code_method.labeled_plain_code import (
     BatchedLabeledCodeTokens,
 )
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
-from jetnn.models.decoders.transformer_decoder import TokenEmbedding, PositionalEncoding
+from jetnn.models.util_layers.positional_encoding import PositionalEncodingWithEmbedding
+from jetnn.models.util_layers.embedding import TokenEmbedding
 
 
 class MethodNameTransformerEncoder(nn.Module):
@@ -17,7 +18,7 @@ class MethodNameTransformerEncoder(nn.Module):
         self._pad_token = vocab.pad_id()
 
         self._embedding = TokenEmbedding(self._vocab_size, config.d_model)
-        self._positional_encoding = PositionalEncoding(config.d_model, config.dropout)
+        self._positional_encoding = PositionalEncodingWithEmbedding(config.d_model, config.dropout)
         encoder_layer = TransformerEncoderLayer(
             d_model=config.d_model,
             nhead=config.nhead,

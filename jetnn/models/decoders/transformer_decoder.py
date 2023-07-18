@@ -3,7 +3,7 @@ import math
 import torch
 from omegaconf import DictConfig
 from torch import nn, Tensor
-from torch.nn import Embedding, Linear
+from torch.nn import Linear
 from torch.nn.modules.transformer import (
     TransformerDecoderLayer,
     Transformer,
@@ -14,36 +14,8 @@ from jetnn.data_processing.plain_code_method.labeled_plain_code import (
     BatchedLabeledCodeTokens,
 )
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
-
-
-class PositionalEncoding(nn.Module):
-    def __init__(self, emb_size: int, dropout: float, max_token_length: int = 5000):
-        super(PositionalEncoding, self).__init__()
-
-        den = torch.exp(-torch.arange(0, emb_size, 2) * math.log(10000) / emb_size)
-        pos = torch.arange(0, max_token_length).reshape(max_token_length, 1)
-
-        pe = torch.zeros((max_token_length, emb_size))
-        pe[:, 0::2] = torch.sin(pos * den)
-        pe[:, 1::2] = torch.cos(pos * den)
-        pe = pe.unsqueeze(0)
-
-        self.dropout = nn.Dropout(dropout)
-        self.register_buffer("pe", pe)
-
-    def forward(self, token_embedding: Tensor):
-        output = token_embedding + self.pe[:, : token_embedding.size(1), :]
-        return self.dropout(output)
-
-
-class TokenEmbedding(nn.Module):
-    def __init__(self, vocab_size: int, emb_size):
-        super(TokenEmbedding, self).__init__()
-        self.embedding = Embedding(vocab_size, emb_size)
-        self.emb_size = emb_size
-
-    def forward(self, tokens: Tensor):
-        return self.embedding(tokens.long()) * math.sqrt(self.emb_size)
+from jetnn.models.util_layers.positional_encoding import PositionalEncodingWithEmbedding
+from jetnn.models.util_layers.embedding import TokenEmbedding
 
 
 class MethodNameTransformerDecoder(nn.Module):
@@ -55,7 +27,7 @@ class MethodNameTransformerDecoder(nn.Module):
         self._eos_token = vocab.eos_id()
 
         self._embedding = TokenEmbedding(self._vocab_size, config.d_model)
-        self._positional_encoding = PositionalEncoding(config.d_model, config.dropout)
+        self._positional_encoding = PositionalEncodingWithEmbedding(config.d_model, config.dropout)
         decoder_layer = TransformerDecoderLayer(
             d_model=config.d_model,
             nhead=config.nhead,
