@@ -7,6 +7,5 @@ tree_code_structure/core/tree-sitter-java
 tree_sitter_build
 bad_samples.log
 .pyc
-configs/
 .idea
 lightning_logs/
