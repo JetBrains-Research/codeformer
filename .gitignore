@@ -8,3 +8,5 @@ tree_sitter_build
 bad_samples.log
 .pyc
 configs/
+.idea
+lightning_logs/

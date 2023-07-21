@@ -14,21 +14,16 @@ from pytorch_lightning.callbacks import (
     TQDMProgressBar,
 )
 from pytorch_lightning.loggers import WandbLogger
-from jetnn.models import MethodNamingModel
-from jetnn.data_processing.plain_code_method.plain_code_data_module import (
-    PlainCodeDataModule,
-)
-from jetnn.data_processing.plain_code_ast_method.plain_code_ast_data_module import (
-    PlainCodeAstDataModule,
+from jetnn.models.tasks.code_modelling import CodeModellingModel
+from jetnn.data_processing.plain_code_modelling.plain_code_modelling_data_module import (
+    PlainCodeModellingDataModule,
 )
 import torch
 
 
 def data_module_by_config(config: DictConfig):
-    if config.data.type == "plain_code":
-        return PlainCodeDataModule(config)
-    elif config.data.type == "plain_code_ast":
-        return PlainCodeAstDataModule(config)
+    if config.data.type == "plain_code_modelling":
+        return PlainCodeModellingDataModule(config)
     else:
         raise ValueError(f"Unknown data format")
 
@@ -39,11 +34,11 @@ def train(config: DictConfig, cuda_devices):
     data_module = data_module_by_config(config)
     vocab = data_module.vocabulary
     if config["checkpoint"] != "None":
-        model = MethodNamingModel.load_from_checkpoint(
+        model = CodeModellingModel.load_from_checkpoint(
             checkpoint_path=config.checkpoint
         )
     else:
-        model = MethodNamingModel(config, vocab)
+        model = CodeModellingModel(config, vocab)
 
     # wandb.login(key=config.wandb.key)
     # wandb_logger = WandbLogger(
@@ -116,7 +111,7 @@ def test(config: DictConfig, cuda_devices):
         raise RuntimeError("Wrong config: No checkpoint path")
 
     data_module = data_module_by_config(config)
-    model = MethodNamingModel.load_from_checkpoint(
+    model = CodeModellingModel.load_from_checkpoint(
         checkpoint_path=config.checkpoint, config=config, vocab=data_module.vocabulary
     )
     if torch.cuda.is_available():

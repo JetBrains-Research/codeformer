@@ -12,16 +12,15 @@ from torch.utils.data import Dataset
 from jetnn.data_processing.vocabularies.plain.plain_code_vocabulary import (
     PlainCodeVocabulary,
 )
-from jetnn.data_processing.plain_code_ast_method.labeled_plain_code_ast import (
-    LabeledCodeAstTokens,
+from jetnn.data_processing.plain_code_modelling.labeled_plain_code_modelling import (
+    LabeledCodeModellingTokens,
 )
 from jetnn.data_processing.tree_code_representation.my_code_tree import MyCodeTree
-from jetnn.models.utils import transform_sequence_according_to_split, transform_sequence_according_to_split_with_begin_end_tokens
+from jetnn.models.utils import transform_sequence_according_to_split_with_begin_end_tokens, get_labels_for_code_modelling
 
 
-class PlainCodeAstDataset(Dataset):
+class PlainCodeModellingDataset(Dataset):
     _log_file = "bad_samples.log"
-    _separator = "|"
 
     def __init__(
         self, data_file: str, config: DictConfig, vocabulary: PlainCodeVocabulary
@@ -42,13 +41,12 @@ class PlainCodeAstDataset(Dataset):
     def __len__(self):
         return self._n_samples
 
-    def __getitem__(self, index) -> Optional[LabeledCodeAstTokens]:
+    # think about last label (end of chunk)
+    def __getitem__(self, index) -> Optional[LabeledCodeModellingTokens]:
         try:
             raw_sample = get_line_by_offset(self._data_file, self._line_offsets[index])
             sample = json.loads(raw_sample)
-            label = sample["label"].replace(self._separator, " ")
             cleaned_code = self._code_tree.remove_comments(sample["code"])
-            tokenized_label = self.tokenize(label, self._config.max_label_parts)
             tokenized_code = self.tokenize(cleaned_code, self._config.max_code_parts)
             tokens = list(
                 filter(
@@ -60,7 +58,7 @@ class PlainCodeAstDataset(Dataset):
                 cleaned_code, tokens, self._config.max_subsequence_size
             )
             num_splits = min(self._config.max_subsequences_number, len(tokens_split))
-            tokenized_code = transform_sequence_according_to_split_with_begin_end_tokens(
+            transformed_tokenized_code = transform_sequence_according_to_split_with_begin_end_tokens(
                 torch.tensor(tokenized_code),
                 tokens_split,
                 num_splits,
@@ -68,9 +66,13 @@ class PlainCodeAstDataset(Dataset):
                 self._vocab.bos_id(),
                 self._vocab.eos_id()
             )
-            return LabeledCodeAstTokens(
+            tokenized_label = get_labels_for_code_modelling(
+                transformed_tokenized_code,
+                tokens_split,
+            )
+            return LabeledCodeModellingTokens(
                 tokenized_label,
-                tokenized_code,
+                transformed_tokenized_code,
                 num_splits
             )
         except ValueError as e:
