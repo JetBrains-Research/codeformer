@@ -40,17 +40,10 @@ class CodeModellingTransformerDecoder(nn.Module):
             dropout=config.dropout,
             batch_first=True,
         )
-        decoder_layer = TransformerDecoderLayer(
-            d_model=config.d_model,
-            nhead=config.nhead,
-            dim_feedforward=config.dim_feedforward,
-            dropout=config.dropout,
-            batch_first=True,
-        )
         self._tokens_encoder = TransformerEncoder(encoder_layer, config.num_layers)
         self._context_encoder = TransformerEncoder(encoder_layer, config.num_layers)
         self._sequence_linear = Linear(self._max_subsequence_size, 1)
-        self._decoder = TransformerDecoder(decoder_layer, config.num_layers)
+        self._decoder = TransformerEncoder(encoder_layer, config.num_layers)
         self._vocab_linear = Linear(config.d_model, len(vocab))
 
     def _pad_to_match_linear_layer(self, x, batch_split):
@@ -63,14 +56,13 @@ class CodeModellingTransformerDecoder(nn.Module):
             p_sum += split
         return result
 
-    # rework
-    def _generate_memory_for_decoder(self, context, batch_split, memory_size):
-        memory = torch.zeros((memory_size, context.size(-1))).to(self._device)
+    def _generate_context_for_decoder(self, context, batch_split, sequence_size):
+        start_context = torch.zeros((sequence_size, context.size(-1))).to(self._device)
         split_sum = 0
         for batch_num, split in enumerate(batch_split):
-            memory[split_sum + 1: split_sum + split] = context[batch_num][:split - 1]
+            start_context[split_sum + 1: split_sum + split] = context[batch_num][:split - 1]
             split_sum += split
-        return memory.unsqueeze(dim=1)
+        return start_context.unsqueeze(dim=1)
         
     def forward(self, batch: BatchedLabeledCodeAstTokens, step) -> Tensor:
         src_sequence = batch.code_tokens
@@ -86,13 +78,17 @@ class CodeModellingTransformerDecoder(nn.Module):
         )
         context = self._context_encoder(context, mask=src_mask)
         
-        memory = self._generate_memory_for_decoder(context, batch.batch_split, src_sequence.size(0))
-        tgt_mask = (Transformer.generate_square_subsequent_mask(src_sequence.size(1))).to(
+        start_context = self._generate_context_for_decoder(context, batch.batch_split, src_sequence.size(0))
+        mask = (Transformer.generate_square_subsequent_mask(src_sequence.size(1) + 1)).to(
             self._device
         )
-        x = self._decoder(tgt=tokens_embedding, 
-                          memory=memory, 
-                          tgt_mask=tgt_mask,
-                          tgt_key_padding_mask=src_key_padding_mask)
+        
+        tokens_with_context = torch.cat((start_context, tokens_embedding), dim=1)
+        context_padding_mask = torch.zeros((src_key_padding_mask.size(0), 1)).to(self._device)
+        src_key_padding_mask = torch.cat((context_padding_mask, src_key_padding_mask), dim=1)
+        
+        x = self._decoder(tokens_with_context,
+                          mask=mask,
+                          src_key_padding_mask=src_key_padding_mask)
         x = self._vocab_linear(x)
         return x.permute(1, 0, 2)

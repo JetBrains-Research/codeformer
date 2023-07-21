@@ -62,7 +62,7 @@ class CodeModellingModel(LightningModule):
     # double check indexes
     def _shared_step(self, batch, step):
         logits = self(batch, step)
-        logits = logits[:-1]
+        logits = logits[1:-1]
         batch.label_tokens = batch.label_tokens[1:]
         result = {f"{step}/loss": self._loss(logits, batch.label_tokens)}
         with torch.no_grad():
