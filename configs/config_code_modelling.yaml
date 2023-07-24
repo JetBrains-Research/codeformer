@@ -19,7 +19,7 @@ model:
 
 data:
   type: 'plain_code_modelling'
-  root: '/home/tim/codeformer/datasets/gradle_new_2048_small'
+  root: '/home/tim/codeformer/datasets/gradle_new_2048_mid'
   path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   base_tokenizer: "microsoft/codebert-base"
   checkpoint_tokenizer: "Salesforce/codet5p-220m"
@@ -57,7 +57,7 @@ optimizer:
 train:
 
   dataloader:
-    batch_size: 4
+    batch_size: 8
     shuffle: True
     num_workers: 4
     prefetch_factor: 2
@@ -67,7 +67,7 @@ train:
 val:
 
   dataloader:
-    batch_size: 4
+    batch_size: 8
     num_workers: 4
     pin_memory: True
     persistent_workers: True
@@ -79,7 +79,7 @@ val:
 test:
 
   dataloader:
-    batch_size: 4
+    batch_size: 8
     num_workers: 4
     pin_memory: True
     persistent_workers: True
