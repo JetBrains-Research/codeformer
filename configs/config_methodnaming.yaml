@@ -48,7 +48,7 @@ model:
 
 data:
   type: 'plain_code_ast'
-  root: '/home/tim/codeformer/datasets/gradle_new_2048_mid'
+  root: '/home/tim/codeformer/datasets/gradle_new_2048'
   path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   base_tokenizer: "microsoft/codebert-base"
   checkpoint_tokenizer: "Salesforce/codet5p-220m"
@@ -76,10 +76,10 @@ trainer:
   log_every_n_steps: 10
 
 optimizer:
-  optimizer: "AdamW"
+  optimizer: "Momentum"
   nesterov: true
-  lr: 0.001
-  weight_decay: 0.01
+  lr: 0.01
+  weight_decay: 0.0001
   n_epochs: 5
   decay_gamma: 0.95
 

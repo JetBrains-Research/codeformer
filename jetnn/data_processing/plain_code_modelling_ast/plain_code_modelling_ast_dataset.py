@@ -12,14 +12,14 @@ from torch.utils.data import Dataset
 from jetnn.data_processing.vocabularies.plain.plain_code_vocabulary import (
     PlainCodeVocabulary,
 )
-from jetnn.data_processing.plain_code_modelling.labeled_plain_code_modelling import (
-    LabeledCodeModellingTokens,
+from jetnn.data_processing.plain_code_modelling_ast.labeled_plain_code_modelling_ast import (
+    LabeledCodeModellingAstTokens,
 )
 from jetnn.data_processing.tree_code_representation.my_code_tree import MyCodeTree
 from jetnn.models.utils import transform_sequence_according_to_split_with_begin_end_tokens, get_labels_for_code_modelling
 
 
-class PlainCodeModellingDataset(Dataset):
+class PlainCodeModellingAstDataset(Dataset):
     _log_file = "bad_samples.log"
 
     def __init__(
@@ -41,8 +41,7 @@ class PlainCodeModellingDataset(Dataset):
     def __len__(self):
         return self._n_samples
 
-    # think about last label (end of chunk)
-    def __getitem__(self, index) -> Optional[LabeledCodeModellingTokens]:
+    def __getitem__(self, index):
         try:
             raw_sample = get_line_by_offset(self._data_file, self._line_offsets[index])
             sample = json.loads(raw_sample)
@@ -70,7 +69,7 @@ class PlainCodeModellingDataset(Dataset):
                 transformed_tokenized_code,
                 tokens_split,
             )
-            return LabeledCodeModellingTokens(
+            return LabeledCodeModellingAstTokens(
                 tokenized_label,
                 transformed_tokenized_code,
                 num_splits
@@ -80,7 +79,7 @@ class PlainCodeModellingDataset(Dataset):
                 f_out.write(f"Error parsing sample from line #{index}: {e}\n")
             return None
 
-    def tokenize(self, text: str, max_parts: int) -> List[int]:
+    def tokenize(self, text, max_parts):
         tokenizer = self._vocab.tokenizer
         return tokenizer.encode(
             text,

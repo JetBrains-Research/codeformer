@@ -11,16 +11,15 @@ from jetnn.data_processing.vocabularies.plain.plain_code_vocabulary import (
     PlainCodeVocabulary,
     from_holdout,
 )
-from jetnn.data_processing.plain_code_modelling.labeled_plain_code_modelling import (
-    LabeledCodeModellingTokens,
-    BatchedLabeledCodeModellingTokens,
+from jetnn.data_processing.plain_code_modelling_ast.labeled_plain_code_modelling_ast import (
+    BatchedLabeledCodeModellingAstTokens,
 )
-from jetnn.data_processing.plain_code_modelling.plain_code_modelling_dataset import (
-    PlainCodeModellingDataset,
+from jetnn.data_processing.plain_code_modelling_ast.plain_code_modelling_ast_dataset import (
+    PlainCodeModellingAstDataset,
 )
 
 
-class PlainCodeModellingDataModule(LightningDataModule):
+class PlainCodeModellingAstDataModule(LightningDataModule):
     _train = "train"
     _val = "val"
     _test = "test"
@@ -53,14 +52,14 @@ class PlainCodeModellingDataModule(LightningDataModule):
 
     @staticmethod
     def collate_wrapper(
-        batch: List[Optional[LabeledCodeModellingTokens]],
-    ) -> BatchedLabeledCodeModellingTokens:
-        return BatchedLabeledCodeModellingTokens(batch)
+        batch,
+    ) -> BatchedLabeledCodeModellingAstTokens:
+        return BatchedLabeledCodeModellingAstTokens(batch)
 
-    def _create_dataset(self, holdout_file: str) -> PlainCodeModellingDataset:
+    def _create_dataset(self, holdout_file: str):
         if self._vocabulary is None:
             raise RuntimeError(f"Setup vocabulary before creating data loaders")
-        return PlainCodeModellingDataset(holdout_file, self._config, self._vocabulary)
+        return PlainCodeModellingAstDataset(holdout_file, self._config, self._vocabulary)
 
     def _shared_dataloader(self, holdout: str) -> DataLoader:
         if self._vocabulary is None:
@@ -85,7 +84,7 @@ class PlainCodeModellingDataModule(LightningDataModule):
         return self.test_dataloader(*args, **kwargs)
 
     def transfer_batch_to_device(
-        self, batch: BatchedLabeledCodeModellingTokens, device: torch.device, dataloader_idx: int
-    ) -> BatchedLabeledCodeModellingTokens:
+        self, batch, device: torch.device, dataloader_idx: int
+    ):
         batch.move_to_device(device)
         return batch

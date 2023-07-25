@@ -7,7 +7,7 @@ model:
   configuration:
 
   encoder: transformer
-  decoder: code_modelling_transformer
+  decoder: code_modelling_ast_transformer
 
   code_modelling_transformer:
     d_model: 768
@@ -17,8 +17,16 @@ model:
     dim_feedforward: 2048
     use_begin_end_tokens: True
 
+  code_modelling_ast_transformer:
+    d_model: 768
+    nhead: 8
+    dropout: 0.1
+    num_layers: 8
+    dim_feedforward: 2048
+    use_begin_end_tokens: True
+
 data:
-  type: 'plain_code_modelling'
+  type: 'plain_code_modelling_ast'
   root: '/home/tim/codeformer/datasets/gradle_new_2048_mid'
   path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   base_tokenizer: "microsoft/codebert-base"

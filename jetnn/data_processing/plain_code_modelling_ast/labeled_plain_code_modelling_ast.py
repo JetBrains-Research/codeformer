@@ -5,14 +5,14 @@ import torch
 
 
 @dataclass
-class LabeledCodeModellingTokens:
+class LabeledCodeModellingAstTokens:
     label: torch.tensor
     code: torch.tensor
     num_splits: int
 
 
-class BatchedLabeledCodeModellingTokens:
-    def __init__(self, all_samples: List[Optional[LabeledCodeModellingTokens]]):
+class BatchedLabeledCodeModellingAstTokens:
+    def __init__(self, all_samples):
         samples = [s for s in all_samples if s is not None]
         self._len = len(samples)
         self.label_tokens = torch.cat([sample.label for sample in samples]) if len(samples) > 0 else torch.tensor([])
@@ -23,7 +23,7 @@ class BatchedLabeledCodeModellingTokens:
     def __len__(self) -> int:
         return self._len
 
-    def pin_memory(self) -> "BatchedLabeledCodeModellingTokens":
+    def pin_memory(self):
         self.label_tokens.pin_memory()
         self.code_tokens.pin_memory()
         self.batch_split.pin_memory()
