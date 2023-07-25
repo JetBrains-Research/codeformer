@@ -18,12 +18,17 @@ from jetnn.models.tasks.code_modelling import CodeModellingModel
 from jetnn.data_processing.plain_code_modelling_ast.plain_code_modelling_ast_data_module import (
     PlainCodeModellingAstDataModule,
 )
+from jetnn.data_processing.plain_code_modelling.plain_code_modelling_data_module import (
+    PlainCodeModellingDataModule,
+)
 import torch
 
 
 def data_module_by_config(config: DictConfig):
     if config.data.type == "plain_code_modelling_ast":
         return PlainCodeModellingAstDataModule(config)
+    elif config.data.type == "plain_code_modelling":
+        return PlainCodeModellingDataModule(config)
     else:
         raise ValueError(f"Unknown data format")
 
