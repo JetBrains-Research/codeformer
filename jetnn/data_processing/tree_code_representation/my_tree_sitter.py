@@ -2,19 +2,20 @@ from tree_sitter import Language, Parser
 
 
 class MyTreeSitter:
-    def __init__(self):
+    def __init__(self, programming_language, path_to_tree_sitter):
         self._init = False
         self._parser = None
         self._p_sum = list()
         self._tree = None
         self._current_node = None
+        path_to_build = 'tree_sitter_build_' + programming_language + '/my-languages.so'
         Language.build_library(
-            "tree_sitter_build/my-languages.so",
-            ["../vendor/tree-sitter-java"],
+            path_to_build,
+            [path_to_tree_sitter],
         )
-        java_language = Language("tree_sitter_build/my-languages.so", "java")
+        language = Language(path_to_build, programming_language)
         self._parser = Parser()
-        self._parser.set_language(java_language)
+        self._parser.set_language(language)
 
     def process_code(self, code):
         self._tree = self._parser.parse(bytes(code, "utf8"))

@@ -78,8 +78,8 @@ class MyNode:
 
 
 class MyCodeTree:
-    def __init__(self):
-        self._tree_sitter = MyTreeSitter()
+    def __init__(self, programming_language='python', path_to_tree_sitter='../vendor/tree-sitter-python'):
+        self._tree_sitter = MyTreeSitter(programming_language, path_to_tree_sitter)
         self._tokens = None
         self._root = None
         random.seed(10)
