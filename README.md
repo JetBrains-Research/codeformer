@@ -5,6 +5,7 @@
 ## Supported tasks
 
 - [x] Method name prediction
+- [x] Code modelling
 - [ ] Comment generation
 - [ ] And more...
 
