@@ -14,15 +14,21 @@ from jetnn.models.util_layers.embedding import TokenEmbedding
 
 class MethodNameMyTransformerEncoder(nn.Module):
     def __init__(
-            self, config: DictConfig, vocab: Vocabulary, max_subsequence_size: int, big_bird_config: DictConfig
+        self,
+        config: DictConfig,
+        vocab: Vocabulary,
+        max_subsequence_size: int,
+        big_bird_config: DictConfig,
     ):
         super().__init__()
         self._vocab_size = len(vocab)
         self._pad_token = vocab.pad_id()
         self._max_subsequence_size = max_subsequence_size + 2
         self._embedding = TokenEmbedding(self._vocab_size, config.d_model)
-        self._positional_encoding = PositionalEncodingWithEmbedding(config.d_model, config.dropout)
-        self._device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self._positional_encoding = PositionalEncodingWithEmbedding(
+            config.d_model, config.dropout
+        )
+        self._device = "cuda" if torch.cuda.is_available() else "cpu"
         encoder_layer = TransformerEncoderLayer(
             d_model=config.d_model,
             nhead=config.nhead,
@@ -37,10 +43,12 @@ class MethodNameMyTransformerEncoder(nn.Module):
     def _pad_to_match_linear_layer(self, x, batch_split):
         max_splits = torch.max(batch_split)
         num_batches = len(batch_split)
-        result = torch.zeros((num_batches, max_splits, self._max_subsequence_size, x.shape[2])).to(self._device)
+        result = torch.zeros(
+            (num_batches, max_splits, self._max_subsequence_size, x.shape[2])
+        ).to(self._device)
         p_sum = 0
         for i, split in enumerate(batch_split):
-            result[i][:split, :x.shape[1]] = x[p_sum: p_sum + split]
+            result[i][:split, : x.shape[1]] = x[p_sum : p_sum + split]
             p_sum += split
         return result
 

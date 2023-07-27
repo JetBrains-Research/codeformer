@@ -20,11 +20,14 @@ from jetnn.models.util_layers.embedding import TokenEmbedding
 
 class CodeModellingTransformerDecoder(nn.Module):
     def __init__(
-            self, config: DictConfig, vocab: Vocabulary, max_subsequence_size: int,
+        self,
+        config: DictConfig,
+        vocab: Vocabulary,
+        max_subsequence_size: int,
     ):
         super().__init__()
         self._vocab_size = len(vocab)
         self._pad_token = vocab.pad_id()
-        
+
     def forward(self, batch: BatchedLabeledCodeAstTokens, step) -> Tensor:
         pass

@@ -18,7 +18,9 @@ class MethodNameTransformerEncoder(nn.Module):
         self._pad_token = vocab.pad_id()
 
         self._embedding = TokenEmbedding(self._vocab_size, config.d_model)
-        self._positional_encoding = PositionalEncodingWithEmbedding(config.d_model, config.dropout)
+        self._positional_encoding = PositionalEncodingWithEmbedding(
+            config.d_model, config.dropout
+        )
         encoder_layer = TransformerEncoderLayer(
             d_model=config.d_model,
             nhead=config.nhead,

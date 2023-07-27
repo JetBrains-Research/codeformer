@@ -16,7 +16,10 @@ from jetnn.data_processing.plain_code_ast_method.labeled_plain_code_ast import (
     LabeledCodeAstTokens,
 )
 from jetnn.data_processing.tree_code_representation.my_code_tree import MyCodeTree
-from jetnn.models.utils import transform_sequence_according_to_split, transform_sequence_according_to_split_with_begin_end_tokens
+from jetnn.models.utils import (
+    transform_sequence_according_to_split,
+    transform_sequence_according_to_split_with_begin_end_tokens,
+)
 
 
 class PlainCodeAstDataset(Dataset):
@@ -35,7 +38,9 @@ class PlainCodeAstDataset(Dataset):
         self._line_offsets = get_lines_offsets(data_file)
         self._n_samples = len(self._line_offsets)
 
-        self._code_tree = MyCodeTree(self._config.programming_language, self._config.path_to_tree_sitter)
+        self._code_tree = MyCodeTree(
+            self._config.programming_language, self._config.path_to_tree_sitter
+        )
 
         open(self._log_file, "w").close()
 
@@ -60,19 +65,17 @@ class PlainCodeAstDataset(Dataset):
                 cleaned_code, tokens, self._config.max_subsequence_size
             )
             num_splits = min(self._config.max_subsequences_number, len(tokens_split))
-            tokenized_code = transform_sequence_according_to_split_with_begin_end_tokens(
-                torch.tensor(tokenized_code),
-                tokens_split,
-                num_splits,
-                self._config.max_subsequence_size,
-                self._vocab.bos_id(),
-                self._vocab.eos_id()
+            tokenized_code = (
+                transform_sequence_according_to_split_with_begin_end_tokens(
+                    torch.tensor(tokenized_code),
+                    tokens_split,
+                    num_splits,
+                    self._config.max_subsequence_size,
+                    self._vocab.bos_id(),
+                    self._vocab.eos_id(),
+                )
             )
-            return LabeledCodeAstTokens(
-                tokenized_label,
-                tokenized_code,
-                num_splits
-            )
+            return LabeledCodeAstTokens(tokenized_label, tokenized_code, num_splits)
         except ValueError as e:
             with open(self._log_file, "a") as f_out:
                 f_out.write(f"Error parsing sample from line #{index}: {e}\n")

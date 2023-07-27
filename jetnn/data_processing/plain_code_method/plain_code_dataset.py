@@ -30,7 +30,7 @@ class PlainCodeDataset(Dataset):
 
         self._line_offsets = get_lines_offsets(data_file)
         self._n_samples = len(self._line_offsets)
-        
+
         self._code_tree = MyCodeTree()
 
         open(self._log_file, "w").close()

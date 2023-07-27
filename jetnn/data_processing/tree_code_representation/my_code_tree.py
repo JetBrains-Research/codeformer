@@ -78,7 +78,11 @@ class MyNode:
 
 
 class MyCodeTree:
-    def __init__(self, programming_language='java', path_to_tree_sitter='../vendor/tree-sitter-java'):
+    def __init__(
+        self,
+        programming_language="java",
+        path_to_tree_sitter="../vendor/tree-sitter-java",
+    ):
         self._tree_sitter = MyTreeSitter(programming_language, path_to_tree_sitter)
         self._tokens = None
         self._root = None
@@ -113,7 +117,7 @@ class MyCodeTree:
         sequence_split = MyCodeTree._split_big_leaves(sequence_split, max_subtree_size)
         sequence_split = MyCodeTree._merge_left(sequence_split, max_subtree_size)
         return sequence_split
-    
+
     def remove_comments(self, code):
         return self._tree_sitter.remove_comments_from_code(code)
 

@@ -133,27 +133,36 @@ def transform_sequence_according_to_split(
     p_sum = 0
     for split_index in range(num_splits):
         split_size = sequence_split[split_index]
-        result[split_index][:split_size] = src_sequence[p_sum: p_sum + split_size]
+        result[split_index][:split_size] = src_sequence[p_sum : p_sum + split_size]
         p_sum += split_size
     return result
 
 
 def transform_sequence_according_to_split_with_begin_end_tokens(
-    src_sequence, sequence_split, num_splits, max_subsequence_size, start_token, end_token
+    src_sequence,
+    sequence_split,
+    num_splits,
+    max_subsequence_size,
+    start_token,
+    end_token,
 ):
     result = torch.zeros((num_splits, max_subsequence_size + 2), dtype=torch.long)
     p_sum = 0
     for split_index in range(num_splits):
         split_size = sequence_split[split_index]
         if split_index == 0:
-            result[split_index][:split_size] = src_sequence[p_sum: p_sum + split_size]
+            result[split_index][:split_size] = src_sequence[p_sum : p_sum + split_size]
             result[split_index][split_size] = end_token
         elif split_index == num_splits - 1:
             result[split_index][0] = end_token
-            result[split_index][1:split_size + 1] = src_sequence[p_sum: p_sum + split_size]
+            result[split_index][1 : split_size + 1] = src_sequence[
+                p_sum : p_sum + split_size
+            ]
         else:
             result[split_index][0] = start_token
-            result[split_index][1:split_size + 1] = src_sequence[p_sum: p_sum + split_size]
+            result[split_index][1 : split_size + 1] = src_sequence[
+                p_sum : p_sum + split_size
+            ]
             result[split_index][split_size + 1] = end_token
         p_sum += split_size
     return result
@@ -163,5 +172,5 @@ def get_labels_for_code_modelling(tansformed_src_sequence, sequence_split):
     result = torch.zeros(tansformed_src_sequence.size(), dtype=torch.long)
     for i, split in enumerate(tansformed_src_sequence):
         split_size = sequence_split[i]
-        result[i][:1 + split_size] = split[1: 2 + split_size]
+        result[i][: 1 + split_size] = split[1 : 2 + split_size]
     return result

@@ -16,7 +16,10 @@ from jetnn.data_processing.plain_code_modelling.labeled_plain_code_modelling imp
     LabeledCodeModellingTokens,
 )
 from jetnn.data_processing.tree_code_representation.my_code_tree import MyCodeTree
-from jetnn.models.utils import transform_sequence_according_to_split_with_begin_end_tokens, get_labels_for_code_modelling
+from jetnn.models.utils import (
+    transform_sequence_according_to_split_with_begin_end_tokens,
+    get_labels_for_code_modelling,
+)
 
 
 class PlainCodeModellingDataset(Dataset):
@@ -47,11 +50,9 @@ class PlainCodeModellingDataset(Dataset):
             sample = json.loads(raw_sample)
             cleaned_code = self._code_tree.remove_comments(sample["code"])
             tokenized_code = self.tokenize(cleaned_code, self._config.max_code_parts)
-            
+
             return LabeledCodeModellingTokens(
-                tokenized_label,
-                transformed_tokenized_code,
-                num_splits
+                tokenized_label, transformed_tokenized_code, num_splits
             )
         except ValueError as e:
             with open(self._log_file, "a") as f_out:

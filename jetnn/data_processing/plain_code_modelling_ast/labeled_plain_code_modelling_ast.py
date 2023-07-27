@@ -15,9 +15,17 @@ class BatchedLabeledCodeModellingAstTokens:
     def __init__(self, all_samples):
         samples = [s for s in all_samples if s is not None]
         self._len = len(samples)
-        self.label_tokens = torch.cat([sample.label for sample in samples]) if len(samples) > 0 else torch.tensor([])
+        self.label_tokens = (
+            torch.cat([sample.label for sample in samples])
+            if len(samples) > 0
+            else torch.tensor([])
+        )
         self.label_tokens = self.label_tokens.permute(1, 0)
-        self.code_tokens = torch.cat([sample.code for sample in samples]) if len(samples) > 0 else torch.tensor([])
+        self.code_tokens = (
+            torch.cat([sample.code for sample in samples])
+            if len(samples) > 0
+            else torch.tensor([])
+        )
         self.batch_split = torch.tensor([sample.num_splits for sample in samples])
 
     def __len__(self) -> int:

@@ -16,7 +16,10 @@ from jetnn.data_processing.plain_code_modelling_ast.labeled_plain_code_modelling
     LabeledCodeModellingAstTokens,
 )
 from jetnn.data_processing.tree_code_representation.my_code_tree import MyCodeTree
-from jetnn.models.utils import transform_sequence_according_to_split_with_begin_end_tokens, get_labels_for_code_modelling
+from jetnn.models.utils import (
+    transform_sequence_according_to_split_with_begin_end_tokens,
+    get_labels_for_code_modelling,
+)
 
 
 class PlainCodeModellingAstDataset(Dataset):
@@ -34,7 +37,9 @@ class PlainCodeModellingAstDataset(Dataset):
         self._line_offsets = get_lines_offsets(data_file)
         self._n_samples = len(self._line_offsets)
 
-        self._code_tree = MyCodeTree(self._config.programming_language, self._config.path_to_tree_sitter)
+        self._code_tree = MyCodeTree(
+            self._config.programming_language, self._config.path_to_tree_sitter
+        )
 
         open(self._log_file, "w").close()
 
@@ -57,22 +62,22 @@ class PlainCodeModellingAstDataset(Dataset):
                 cleaned_code, tokens, self._config.max_subsequence_size
             )
             num_splits = min(self._config.max_subsequences_number, len(tokens_split))
-            transformed_tokenized_code = transform_sequence_according_to_split_with_begin_end_tokens(
-                torch.tensor(tokenized_code),
-                tokens_split,
-                num_splits,
-                self._config.max_subsequence_size,
-                self._vocab.bos_id(),
-                self._vocab.eos_id()
+            transformed_tokenized_code = (
+                transform_sequence_according_to_split_with_begin_end_tokens(
+                    torch.tensor(tokenized_code),
+                    tokens_split,
+                    num_splits,
+                    self._config.max_subsequence_size,
+                    self._vocab.bos_id(),
+                    self._vocab.eos_id(),
+                )
             )
             tokenized_label = get_labels_for_code_modelling(
                 transformed_tokenized_code,
                 tokens_split,
             )
             return LabeledCodeModellingAstTokens(
-                tokenized_label,
-                transformed_tokenized_code,
-                num_splits
+                tokenized_label, transformed_tokenized_code, num_splits
             )
         except ValueError as e:
             with open(self._log_file, "a") as f_out:

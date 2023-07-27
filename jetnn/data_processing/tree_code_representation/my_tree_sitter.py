@@ -8,7 +8,7 @@ class MyTreeSitter:
         self._p_sum = list()
         self._tree = None
         self._current_node = None
-        path_to_build = 'tree_sitter_build_' + programming_language + '/my-languages.so'
+        path_to_build = "tree_sitter_build_" + programming_language + "/my-languages.so"
         Language.build_library(
             path_to_build,
             [path_to_tree_sitter],
@@ -31,10 +31,11 @@ class MyTreeSitter:
         comment_nodes = []
 
         def walk(node):
-            if 'comment' in node.type.lower(): 
+            if "comment" in node.type.lower():
                 comment_nodes.append(node)
             for child in node.children:
                 walk(child)
+
         walk(root_node)
 
         comment_positions = [(node.start_byte, node.end_byte) for node in comment_nodes]

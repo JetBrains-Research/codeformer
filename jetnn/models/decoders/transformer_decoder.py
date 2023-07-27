@@ -27,7 +27,9 @@ class MethodNameTransformerDecoder(nn.Module):
         self._eos_token = vocab.eos_id()
 
         self._embedding = TokenEmbedding(self._vocab_size, config.d_model)
-        self._positional_encoding = PositionalEncodingWithEmbedding(config.d_model, config.dropout)
+        self._positional_encoding = PositionalEncodingWithEmbedding(
+            config.d_model, config.dropout
+        )
         decoder_layer = TransformerDecoderLayer(
             d_model=config.d_model,
             nhead=config.nhead,

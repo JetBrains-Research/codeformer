@@ -85,7 +85,10 @@ class PlainCodeAstDataModule(LightningDataModule):
         return self.test_dataloader(*args, **kwargs)
 
     def transfer_batch_to_device(
-        self, batch: BatchedLabeledCodeAstTokens, device: torch.device, dataloader_idx: int
+        self,
+        batch: BatchedLabeledCodeAstTokens,
+        device: torch.device,
+        dataloader_idx: int,
     ) -> BatchedLabeledCodeAstTokens:
         batch.move_to_device(device)
         return batch
