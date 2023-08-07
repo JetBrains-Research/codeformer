@@ -15,7 +15,7 @@ from jetnn.data_processing.vocabularies.plain.plain_code_vocabulary import (
 from jetnn.data_processing.plain_code_modelling.labeled_plain_code_modelling import (
     LabeledCodeModellingTokens,
 )
-from jetnn.data_processing.tree_code_representation.my_code_tree import MyCodeTree
+from jetnn.data_processing.tree_representation.my_code_tree import MyCodeTree
 from jetnn.models.utils import (
     transform_sequence_according_to_split_with_begin_end_tokens,
     get_labels_for_code_modelling,

@@ -15,7 +15,7 @@ from jetnn.data_processing.vocabularies.plain.plain_code_vocabulary import (
 from jetnn.data_processing.plain_code_modelling_ast.labeled_plain_code_modelling_ast import (
     LabeledCodeModellingAstTokens,
 )
-from jetnn.data_processing.tree_code_representation.my_code_tree import MyCodeTree
+from jetnn.data_processing.tree_representation.my_code_tree import MyCodeTree
 from jetnn.models.utils import (
     transform_sequence_according_to_split_with_begin_end_tokens,
     get_labels_for_code_modelling,
@@ -50,7 +50,7 @@ class PlainCodeModellingAstDataset(Dataset):
         try:
             raw_sample = get_line_by_offset(self._data_file, self._line_offsets[index])
             sample = json.loads(raw_sample)
-            cleaned_code = self._code_tree.remove_comments(sample["code"])
+            cleaned_code, _ = self._code_tree.remove_comments(sample["code"])
             tokenized_code = self.tokenize(cleaned_code, self._config.max_code_parts)
             tokens = list(
                 filter(

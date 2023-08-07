@@ -1,6 +1,6 @@
 import sys
 
-sys.path.append("../../../jetnn/data_processing/tree_code_representation")
+sys.path.append("../../../jetnn/data_processing/tree_representation")
 sys.path.append("../../")
 sys.path.append("../../../")
 
