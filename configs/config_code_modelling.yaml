@@ -27,7 +27,7 @@ model:
 
 data:
   type: 'plain_code_modelling_ast'
-  root: '/home/tim/codeformer/datasets/python_starcoder'
+  root: '/home/tim/codeformer/datasets/python_starcoder_processed'
   programming_language: 'python'
   path_to_tree_sitter: '../vendor/tree-sitter-python'
   path: '../../pretrained/plain_code_accumulate_spaces.vocab'
