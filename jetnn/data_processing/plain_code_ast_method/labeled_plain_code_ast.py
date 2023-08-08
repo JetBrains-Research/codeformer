@@ -22,7 +22,11 @@ class BatchedLabeledCodeAstTokens:
         self.label_tokens = torch.tensor(
             transpose([sample.label for sample in samples]), dtype=torch.long
         )
-        self.code_tokens = torch.cat([sample.code for sample in samples]) if len(samples) > 0 else torch.tensor([])
+        self.code_tokens = (
+            torch.cat([sample.code for sample in samples])
+            if len(samples) > 0
+            else torch.tensor([])
+        )
         self.batch_split = torch.tensor([sample.num_splits for sample in samples])
 
     def __len__(self) -> int:

@@ -61,12 +61,14 @@ class MethodNamingModel(LightningModule):
                 self._config.model.my_transformer,
                 self._vocab,
                 self._config.data.max_subsequence_size,
-                self._config.model.big_bird
+                self._config.model.big_bird,
             )
         elif self._config.model.encoder == "big_bird":
             return MethodNameBigBirdEncoder(self._config.model.big_bird, self._vocab)
         elif self._config.model.encoder == "longformer":
-            return MethodNameLongformerEncoder(self._config.model.longformer, self._vocab)
+            return MethodNameLongformerEncoder(
+                self._config.model.longformer, self._vocab
+            )
         else:
             raise ValueError("Unknown encoder type")
 

@@ -4,8 +4,12 @@ from commode_utils.losses import SequenceCrossEntropyLoss
 from commode_utils.metrics import SequentialF1Score, ClassificationMetrics
 from pytorch_lightning import LightningModule
 from torchmetrics import MetricCollection, Metric
-from jetnn.models.decoders.code_modelling_ast_transformer_decoder import CodeModellingAstTransformerDecoder
-from jetnn.models.decoders.code_modelling_transformer_decoder import CodeModellingTransformerDecoder
+from jetnn.models.decoders.code_modelling_ast_transformer_decoder import (
+    CodeModellingAstTransformerDecoder,
+)
+from jetnn.models.decoders.code_modelling_transformer_decoder import (
+    CodeModellingTransformerDecoder,
+)
 from jetnn.models.utils import configure_optimizers_alon
 
 
@@ -30,11 +34,15 @@ class CodeModellingModel(LightningModule):
     def _get_decoder(self):
         if self._config.model.decoder == "code_modelling_ast_transformer":
             return CodeModellingAstTransformerDecoder(
-                self._config.model.code_modelling_ast_transformer, self._vocab, self._config.data.max_subsequence_size
+                self._config.model.code_modelling_ast_transformer,
+                self._vocab,
+                self._config.data.max_subsequence_size,
             )
         elif self._config.model.decoder == "code_modelling_transformer":
             return CodeModellingTransformerDecoder(
-                self._config.model.code_modelling_transformer, self._vocab, self._config.data.max_subsequence_size
+                self._config.model.code_modelling_transformer,
+                self._vocab,
+                self._config.data.max_subsequence_size,
             )
         else:
             raise ValueError("Unknown decoder type")
@@ -64,7 +72,7 @@ class CodeModellingModel(LightningModule):
                 }
             )
         return result
-    
+
     def training_step(self, batch, batch_idx):
         result = self._shared_step(batch, "train")
         self.log_dict(result, on_step=True, on_epoch=False)
@@ -78,7 +86,7 @@ class CodeModellingModel(LightningModule):
     def test_step(self, batch, batch_idx):
         result = self._shared_step(batch, "test")
         return result["test/loss"]
-    
+
     def _shared_epoch_end(self, step_outputs, step):
         with torch.no_grad():
             losses = [

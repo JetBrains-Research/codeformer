@@ -26,12 +26,11 @@ class PositionalEncodingOriginal(nn.Module):
 
 
 class PositionalEncodingWithEmbedding(nn.Module):
-
     def __init__(self, emb_size, dropout, max_sequence_len=5000):
         super(PositionalEncodingWithEmbedding, self).__init__()
         self._positional_encoding = Embedding(max_sequence_len, emb_size)
         self._dropout = nn.Dropout(dropout)
-        self._device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self._device = "cuda" if torch.cuda.is_available() else "cpu"
 
     def forward(self, token_embedding):
         positions = torch.arange(token_embedding.size(1)).to(self._device)

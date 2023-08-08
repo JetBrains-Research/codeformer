@@ -87,7 +87,7 @@ def train(config: DictConfig, cuda_devices):
                 print_epoch_result_callback,
                 progress_bar,
             ],
-            accumulate_grad_batches=7
+            accumulate_grad_batches=7,
         )
     else:
         trainer = Trainer(
@@ -104,7 +104,7 @@ def train(config: DictConfig, cuda_devices):
                 print_epoch_result_callback,
                 progress_bar,
             ],
-            accumulate_grad_batches=7
+            accumulate_grad_batches=7,
         )
 
     trainer.fit(model=model, datamodule=data_module)
@@ -127,7 +127,7 @@ def test(config: DictConfig, cuda_devices):
 
 
 if __name__ == "__main__":
-    torch.set_float32_matmul_precision('medium')
+    torch.set_float32_matmul_precision("medium")
     arg_parser = ArgumentParser()
     arg_parser.add_argument(
         "mode", help="Mode to run script", choices=["train", "test"]

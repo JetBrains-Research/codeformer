@@ -59,7 +59,9 @@ class PlainCodeModellingAstDataModule(LightningDataModule):
     def _create_dataset(self, holdout_file: str):
         if self._vocabulary is None:
             raise RuntimeError(f"Setup vocabulary before creating data loaders")
-        return PlainCodeModellingAstDataset(holdout_file, self._config, self._vocabulary)
+        return PlainCodeModellingAstDataset(
+            holdout_file, self._config, self._vocabulary
+        )
 
     def _shared_dataloader(self, holdout: str) -> DataLoader:
         if self._vocabulary is None:

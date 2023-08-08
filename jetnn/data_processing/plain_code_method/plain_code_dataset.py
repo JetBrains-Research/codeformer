@@ -12,7 +12,7 @@ from jetnn.data_processing.vocabularies.plain.plain_code_vocabulary import (
     PlainCodeVocabulary,
 )
 from jetnn.data_processing.plain_code_method.labeled_plain_code import LabeledCodeTokens
-from jetnn.data_processing.tree_code_representation.my_code_tree import MyCodeTree
+from jetnn.data_processing.tree_representation.my_code_tree import MyCodeTree
 
 
 class PlainCodeDataset(Dataset):
@@ -30,7 +30,7 @@ class PlainCodeDataset(Dataset):
 
         self._line_offsets = get_lines_offsets(data_file)
         self._n_samples = len(self._line_offsets)
-        
+
         self._code_tree = MyCodeTree()
 
         open(self._log_file, "w").close()
@@ -43,7 +43,7 @@ class PlainCodeDataset(Dataset):
             raw_sample = get_line_by_offset(self._data_file, self._line_offsets[index])
             sample = json.loads(raw_sample)
             label = sample["label"].replace(self._separator, " ")
-            cleaned_code = self._code_tree.remove_comments(sample["code"])
+            cleaned_code, _ = self._code_tree.remove_comments(sample["code"])
             return LabeledCodeTokens(
                 self.tokenize(label, self._config.max_label_parts),
                 self.tokenize(cleaned_code, self._config.max_code_parts),
