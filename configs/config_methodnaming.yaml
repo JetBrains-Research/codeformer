@@ -48,11 +48,8 @@ model:
 
 data:
   type: 'plain_code_ast'
-  root: '../../datasets/gradle_new_2048_small'
-  programming_language: 'java'
-  path_to_tree_sitter: '../vendor/tree-sitter-java'
+  root: '../../datasets/gradle_new_2048'
   path: '../../pretrained/plain_code_accumulate_spaces.vocab'
-  base_tokenizer: "microsoft/codebert-base"
   checkpoint_tokenizer: "Salesforce/codet5p-220m"
   train_new_tokenizer: False
   max_tokenizer_vocab: 20000
@@ -60,6 +57,8 @@ data:
   max_label_parts: 7
   max_subsequence_size: 10
   max_subsequences_number: 256
+  programming_language: 'java'
+  path_to_tree_sitter: '../vendor/tree-sitter-java'
 
 wandb:
   project: long-context-transformer
@@ -78,10 +77,10 @@ trainer:
   log_every_n_steps: 10
 
 optimizer:
-  optimizer: "Momentum"
+  optimizer: "AdamW"
   nesterov: true
-  lr: 0.01
-  weight_decay: 0.0001
+  lr: 0.00004
+  weight_decay: 0.01
   n_epochs: 5
   decay_gamma: 0.95
 

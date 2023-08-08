@@ -2,7 +2,7 @@ import json
 from string import punctuation, whitespace
 
 from omegaconf import DictConfig
-from transformers import PreTrainedTokenizerFast, RobertaTokenizerFast, AutoTokenizer
+from transformers import PreTrainedTokenizerFast, AutoTokenizer
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
 
 
@@ -33,7 +33,6 @@ class PlainCodeVocabulary(Vocabulary):
 
 
 def from_holdout(file: str, config: DictConfig) -> PlainCodeVocabulary:
-    # tokenizer = RobertaTokenizerFast.from_pretrained(config.base_tokenizer)
     tokenizer = AutoTokenizer.from_pretrained(config.checkpoint_tokenizer)
     print(config.checkpoint_tokenizer)
     if config.train_new_tokenizer:

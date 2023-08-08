@@ -1,7 +1,7 @@
 from jetnn.data_processing.tree_representation.my_tree_sitter import MyTreeSitter
 import random
 import sys
-from tree_utils import MyTokens, MyNode, split_big_leaves, merge_left
+from jetnn.data_processing.tree_representation.tree_utils import MyTokens, MyNode, split_big_leaves, merge_left
 
 
 class MyCodeTree:

@@ -64,6 +64,9 @@ class PlainCodeAstDataset(Dataset):
             tokens_split = self._code_tree.process_code(
                 cleaned_code, tokens, self._config.max_subsequence_size
             )
+            # tokens_split = self._code_tree.process_code_random(
+            #     tokens, self._config.max_subsequence_size
+            # )
             num_splits = min(self._config.max_subsequences_number, len(tokens_split))
             tokenized_code = (
                 transform_sequence_according_to_split_with_begin_end_tokens(
