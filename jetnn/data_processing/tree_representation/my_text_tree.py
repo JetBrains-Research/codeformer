@@ -1,5 +1,5 @@
 import spacy
-from tree_utils import MyTokens, MyNode, split_big_leaves, merge_left
+from jetnn.data_processing.tree_representation.tree_utils import MyTokens, MyNode, split_big_leaves, merge_left
 import random
 
 
@@ -9,15 +9,16 @@ class MyTextTree:
         self._nlp = spacy.load("en_core_web_sm")
         self._tree_doc = None
         self._tokens = None
-        self._spacy_root = None
+        self._spacy_roots = None
         self._root = None
         random.seed(10)
 
-    def _find_root_node(self):
+    def _find_root_nodes(self):
+        root_nodes = list()
         for token in self._tree_doc:
             if token.dep_ == 'ROOT':
-                return token
-        raise RuntimeError("Root not found!")
+                root_nodes.append(token)
+        return root_nodes
 
     @staticmethod
     def _post_process_sequence_split(sequence_split, max_subtree_size):
@@ -27,10 +28,15 @@ class MyTextTree:
 
     def process_text(self, text, tokens, max_subtree_size=16, tokens_process_function=lambda x: x):
         self._tree_doc = self._nlp(text)
-        self._spacy_root = self._find_root_node()
+        self._spacy_roots = self._find_root_nodes()
         self._tokens = MyTokens(text, tokens, tokens_process_function)
-        self._root = self._init_traverse_tree(self._spacy_root)
+
+        self._root = MyNode(0, len(text))
+        for spacy_root in self._spacy_roots:
+            self._root.add_children(self._init_traverse_tree(spacy_root))
+
         sequence_split = self._get_sequence_split(self._root, max_subtree_size)
+        print("initial sequence:", [node.get_num_tokens() for node in sequence_split])
         return MyTextTree._post_process_sequence_split(
             [node.get_num_tokens() for node in sequence_split], max_subtree_size
         )

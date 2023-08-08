@@ -12,7 +12,7 @@ class MyNode:
     def add_children(self, my_node):
         if my_node.get_num_tokens() == 0:
             return
-        my_node_start_pos, my_node_end_pos = my_node.get_start_end_bytes()
+        my_node_start_pos, my_node_end_pos = my_node.get_current_node_start_end()
         self._start_pos = min(self._start_pos, my_node_start_pos)
         self._end_pos = max(self._end_pos, my_node_end_pos)
         self._children.append(my_node)
