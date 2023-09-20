@@ -1,0 +1,3 @@
+[submodule "jetnn/vendor/tree-sitter-go"]
+	path = jetnn/vendor/tree-sitter-go
+	url = https://github.com/tree-sitter/tree-sitter-go

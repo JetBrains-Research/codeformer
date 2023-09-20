@@ -136,7 +136,7 @@ if __name__ == "__main__":
         "-c", "--config", help="Path to YAML configuration file", type=str
     )
     arg_parser.add_argument(
-        "-cd", "--cuda_devices", help="available cuda decices", type=list
+        "-cd", "--cuda_devices", help="available cuda devices", type=list
     )
     args = arg_parser.parse_args()
     cuda_devices = [int(cd) for cd in args.cuda_devices]

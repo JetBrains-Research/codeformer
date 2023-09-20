@@ -48,17 +48,17 @@ model:
 
 data:
   type: 'plain_code_ast'
-  root: '../../datasets/gradle_new_2048'
+  root: '../../datasets/lca_go_small'
   path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   checkpoint_tokenizer: "Salesforce/codet5p-220m"
   train_new_tokenizer: False
   max_tokenizer_vocab: 20000
-  max_code_parts: 1024
+  max_code_parts: 4096
   max_label_parts: 7
-  max_subsequence_size: 10
-  max_subsequences_number: 256
-  programming_language: 'java'
-  path_to_tree_sitter: '../vendor/tree-sitter-java'
+  max_subsequence_size: 16
+  max_subsequences_number: 384
+  programming_language: 'go'
+  path_to_tree_sitter: '../vendor/tree-sitter-go'
 
 wandb:
   project: long-context-transformer

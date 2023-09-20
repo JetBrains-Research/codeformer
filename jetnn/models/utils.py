@@ -150,20 +150,11 @@ def transform_sequence_according_to_split_with_begin_end_tokens(
     p_sum = 0
     for split_index in range(num_splits):
         split_size = sequence_split[split_index]
-        if split_index == 0:
-            result[split_index][:split_size] = src_sequence[p_sum : p_sum + split_size]
-            result[split_index][split_size] = end_token
-        elif split_index == num_splits - 1:
-            result[split_index][0] = end_token
-            result[split_index][1 : split_size + 1] = src_sequence[
-                p_sum : p_sum + split_size
-            ]
-        else:
-            result[split_index][0] = start_token
-            result[split_index][1 : split_size + 1] = src_sequence[
-                p_sum : p_sum + split_size
-            ]
-            result[split_index][split_size + 1] = end_token
+        result[split_index][0] = start_token
+        result[split_index][1 : split_size + 1] = src_sequence[
+            p_sum : p_sum + split_size
+        ]
+        result[split_index][split_size + 1] = end_token
         p_sum += split_size
     return result
 

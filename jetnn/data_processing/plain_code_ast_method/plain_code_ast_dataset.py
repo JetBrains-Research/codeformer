@@ -54,20 +54,18 @@ class PlainCodeAstDataset(Dataset):
             label = sample["label"].replace(self._separator, " ")
             cleaned_code, _ = self._code_tree.remove_comments(sample["code"])
             tokenized_label = self.tokenize(label, self._config.max_label_parts)
-            tokenized_code = self.tokenize(cleaned_code, self._config.max_code_parts)
-            tokens = list(
-                filter(
-                    lambda x: x != self._vocab.tokenizer.pad_token,
-                    [self._vocab.tokenizer.decode(token) for token in tokenized_code],
-                )
-            )[1:-1]
+            tokenized_code = self.tokenize(cleaned_code, self._config.max_code_parts, add_begin_end=False)
+            tokens = self._vocab.tokenizer.batch_decode(list(filter(lambda x: x != self._vocab.pad_id(), tokenized_code)), skip_special_tokens=True)
             tokens_split = self._code_tree.process_code(
                 cleaned_code, tokens, self._config.max_subsequence_size
             )
             # tokens_split = self._code_tree.process_code_random(
             #     tokens, self._config.max_subsequence_size
             # )
-            num_splits = min(self._config.max_subsequences_number, len(tokens_split))
+            if self._config.max_subsequences_number < len(tokens_split):
+                raise ValueError("Example is too long for such context length")
+            
+            num_splits = len(tokens_split)
             tokenized_code = (
                 transform_sequence_according_to_split_with_begin_end_tokens(
                     torch.tensor(tokenized_code),
@@ -84,11 +82,11 @@ class PlainCodeAstDataset(Dataset):
                 f_out.write(f"Error parsing sample from line #{index}: {e}\n")
             return None
 
-    def tokenize(self, text: str, max_parts: int) -> List[int]:
+    def tokenize(self, text: str, max_parts: int, add_begin_end: bool=True) -> List[int]:
         tokenizer = self._vocab.tokenizer
         return tokenizer.encode(
             text,
-            add_special_tokens=True,
+            add_special_tokens=add_begin_end,
             padding="max_length",
             max_length=max_parts,
             truncation="longest_first",
