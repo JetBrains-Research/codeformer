@@ -48,7 +48,7 @@ model:
 
 data:
   type: 'plain_code_ast'
-  root: '../../datasets/lca_go_small'
+  root: '../../datasets/python_lca_small'
   path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   checkpoint_tokenizer: "Salesforce/codet5p-220m"
   train_new_tokenizer: False
@@ -57,8 +57,9 @@ data:
   max_label_parts: 7
   max_subsequence_size: 16
   max_subsequences_number: 384
-  programming_language: 'go'
-  path_to_tree_sitter: '../vendor/tree-sitter-go'
+  comments_removed: True
+  programming_language: 'python'
+  path_to_tree_sitter: '../vendor/tree-sitter-python'
 
 wandb:
   project: long-context-transformer

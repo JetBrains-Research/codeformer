@@ -41,14 +41,12 @@ class MyTokens:
     def __init__(self, text, tokens, tokens_process_function):
         self._tokens = [tokens_process_function(token) for token in tokens]
         self._tokens_positions = list()
-        self._tokens_positions.append(0)
         current_position = 0
         for token in self._tokens:
             pos = text.find(token, current_position)
             if pos != -1:
                 current_position = pos + len(token)
             self._tokens_positions.append(current_position)
-        self._tokens_positions.append(self._tokens_positions[-1])
         self._index = 0
 
     def get_current_token_info(self):
