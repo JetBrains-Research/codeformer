@@ -159,9 +159,68 @@ def transform_sequence_according_to_split_with_begin_end_tokens(
     return result
 
 
-def get_labels_for_code_modelling(tansformed_src_sequence, sequence_split):
-    result = torch.zeros(tansformed_src_sequence.size(), dtype=torch.long)
-    for i, split in enumerate(tansformed_src_sequence):
-        split_size = sequence_split[i]
-        result[i][: 1 + split_size] = split[1 : 2 + split_size]
-    return result
+def cut_context_according_to_splits(tokens, max_num_splits, tokens_split, method_location):
+    if len(tokens_split) < max_num_splits:
+        return tokens, tokens_split
+    splits_pref_sum = list()
+    token_idx = 0
+    for idx in range(len(tokens_split)):
+        cur_split_len = sum([len(tokens[i] for i in range(token_idx, token_idx + tokens_split[idx]))])
+        token_idx += tokens_split[idx]
+        prev_split = 0 if idx == 0 else splits_pref_sum[idx - 1]
+        splits_pref_sum[idx] = prev_split + cur_split_len
+
+    split_begin_idx = -1
+    pos = 0
+    while pos < method_location[0]:
+        split_begin_idx += 1
+        pos += splits_pref_sum[split_begin_idx]
+    split_begin_idx -= 1
+    pos -= splits_pref_sum[split_begin_idx]
+
+    split_end_idx = split_begin_idx
+    while pos < method_location[1]:
+        split_end_idx += 1
+        pos += splits_pref_sum[split_end_idx]
+    split_end_idx += 1
+
+    splits_left = max(0, max_num_splits - (split_end_idx - split_begin_idx))
+    if splits_left == 0:
+        start_split = split_begin_idx
+        end_split = split_begin_idx + max_num_splits
+    elif splits_left >= split_begin_idx:
+        start_split = 0
+        end_split = split_end_idx + splits_left - split_begin_idx
+    else:
+        start_split = split_begin_idx - splits_left
+        end_split = split_end_idx
+    start_token = 0 if start_split == 0 else splits_pref_sum[start_split - 1]
+    end_token = 0 if end_split == 0 else splits_pref_sum[end_split - 1]
+    return tokens[start_token: end_token], tokens_split[start_split: end_split]
+
+
+def cut_context_according_to_tokens(tokens, max_context_length, method_location):
+    if len(tokens) <= max_context_length:
+        return tokens
+
+    token_begin_idx = -1
+    pos = 0
+    while pos <= method_location[0]:
+        token_begin_idx += 1
+        pos += len(tokens[token_begin_idx])
+    pos -= len(tokens[token_begin_idx])
+    token_begin_idx -= 1
+
+    token_end_idx = token_begin_idx
+    while pos < method_location[1]:
+        token_end_idx += 1
+        pos += len(tokens[token_end_idx])
+    token_end_idx += 1
+
+    tokens_left = max(0, max_context_length - (token_end_idx - token_begin_idx))
+    if tokens_left == 0:
+        return tokens[token_begin_idx: token_begin_idx + max_context_length]
+    elif tokens_left >= token_begin_idx:
+        return tokens[0: token_end_idx + tokens_left - token_begin_idx]
+    else:
+        return tokens[token_begin_idx - tokens_left: token_end_idx]
