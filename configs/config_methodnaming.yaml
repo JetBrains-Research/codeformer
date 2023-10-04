@@ -48,16 +48,15 @@ model:
 
 data:
   type: 'plain_code_ast'
-  root: '../../datasets/python_lca_small'
+  root: '../../datasets/python_small'
   path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   checkpoint_tokenizer: "Salesforce/codet5p-220m"
   train_new_tokenizer: False
   max_tokenizer_vocab: 20000
   max_code_parts: 4096
   max_label_parts: 7
-  max_subsequence_size: 16
-  max_subsequences_number: 384
-  comments_removed: True
+  max_subsequence_size: 10
+  max_subsequences_number: 256
   programming_language: 'python'
   path_to_tree_sitter: '../vendor/tree-sitter-python'
 

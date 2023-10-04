@@ -16,8 +16,8 @@ class MyCodeTree:
         random.seed(10)
         sys.setrecursionlimit(10000)
 
-    def remove_comments(self, code):
-        return self._tree_sitter.remove_comments_from_code(code)
+    def remove_comments(self, code, method_location=()):
+        return self._tree_sitter.remove_comments_from_code(code, method_location)
 
     @staticmethod
     def _post_process_sequence_split(sequence_split, max_subtree_size):
@@ -76,4 +76,6 @@ class MyCodeTree:
                 subtree_split.extend(
                     self.get_sequence_split(chile_node, max_subtree_size)
                 )
+            if len(subtree_split) == 0 and len(start_node.get_children()) == 0:
+                subtree_split.append(start_node)
         return subtree_split

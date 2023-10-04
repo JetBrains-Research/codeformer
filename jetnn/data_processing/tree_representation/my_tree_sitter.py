@@ -21,9 +21,13 @@ class MyTreeSitter:
         self._tree = self._parser.parse(bytes(code, "utf8"))
         self._current_node = self._tree.walk()
 
-    def remove_comments_from_code(self, code):
-        tree = self._parser.parse(bytes(code, "utf8"))
+    def remove_comments_from_code(self, code, method_location):
+        code_bytes = bytes(code, 'utf8')
+        bytes_method_location = [len(bytes(code[:method_location[i]], 'utf8')) for i in range(2)]
+        tree = self._parser.parse(code_bytes)
         root_node = tree.root_node
+        shift = 0
+        shrink = 0
         comment_nodes = []
 
         def walk(node):
@@ -35,12 +39,24 @@ class MyTreeSitter:
         walk(root_node)
 
         comment_positions = [(node.start_byte, node.end_byte) for node in comment_nodes]
-        comment_text = "\n".join([code[start_byte: end_byte] for start_byte, end_byte in comment_positions])
+        comment_text = "\n".join([str(code_bytes[start_byte: end_byte], 'utf8') for start_byte, end_byte in comment_positions])
+        
+        for start_byte, end_byte in comment_positions:
+            if start_byte < bytes_method_location[0]:
+                assert end_byte <= bytes_method_location[0]
+                shift -= (end_byte - start_byte)
+            elif start_byte >= bytes_method_location[0] and start_byte < bytes_method_location[1]:
+                assert end_byte <= bytes_method_location[1]
+                shrink -= (end_byte - start_byte)
+                
+        new_bytes_method_location = (bytes_method_location[0] + shift, bytes_method_location[1] + shift + shrink)
+        new_method_location = [len(str(code_bytes[:new_bytes_method_location[i]], 'utf8')) for i in range(2)]
         comment_positions.reverse()
-        clean_code = code
+        clean_bytes = code_bytes
         for start, end in comment_positions:
-            clean_code = clean_code[:start] + clean_code[end:]
-        return clean_code, comment_text
+            clean_bytes = clean_bytes[:start] + clean_bytes[end:]
+        clean_code = str(clean_bytes, 'utf8')
+        return clean_code, comment_text, new_method_location
 
     def get_current_node(self):
         return self._current_node
