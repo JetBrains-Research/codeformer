@@ -47,6 +47,7 @@ class PlainCodeAstDataset(Dataset):
     def __len__(self):
         return self._n_samples
 
+    # TODO: remove string annotations for python and add context cutting
     def __getitem__(self, index) -> Optional[LabeledCodeAstTokens]:
         try:
             raw_sample = get_line_by_offset(self._data_file, self._line_offsets[index])

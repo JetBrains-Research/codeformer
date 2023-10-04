@@ -45,23 +45,23 @@ def train(config: DictConfig, cuda_devices):
     else:
         model = MethodNamingModel(config, vocab)
 
-    # wandb.login(key=config.wandb.key)
-    # wandb_logger = WandbLogger(
-    #     project=config.wandb.project,
-    #     group=config.wandb.group,
-    #     log_model=False,
-    #     offline=config.wandb.offline,
-    #     config=OmegaConf.to_container(config),
-    # )
+    wandb.login(key=config.wandb.key)
+    wandb_logger = WandbLogger(
+        project=config.wandb.project,
+        group=config.wandb.group,
+        log_model=False,
+        offline=config.wandb.offline,
+        config=OmegaConf.to_container(config),
+    )
 
-    # checkpoint_callback = ModelCheckpointWithUploadCallback(
-    #     dirpath=wandb_logger.experiment.dir,
-    #     filename="{epoch:02d}-val_loss={val/loss:.4f}",
-    #     monitor="val/loss",
-    #     every_n_epochs=params.save_every_epoch,
-    #     save_top_k=-1,
-    #     auto_insert_metric_name=False,
-    # )
+    checkpoint_callback = ModelCheckpointWithUploadCallback(
+        dirpath=wandb_logger.experiment.dir,
+        filename="{epoch:02d}-val_loss={val/loss:.4f}",
+        monitor="val/loss",
+        every_n_epochs=params.save_every_epoch,
+        save_top_k=-1,
+        auto_insert_metric_name=False,
+    )
 
     early_stopping_callback = EarlyStopping(
         patience=params.patience, monitor="val/loss", verbose=True, mode="min"

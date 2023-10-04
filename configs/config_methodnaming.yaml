@@ -61,9 +61,9 @@ data:
   path_to_tree_sitter: '../vendor/tree-sitter-python'
 
 wandb:
-  project: long-context-transformer
+  project: codeformer
   group: null
-  offline: true
+  offline: false
   key: ""
 
 trainer:
@@ -77,10 +77,10 @@ trainer:
   log_every_n_steps: 10
 
 optimizer:
-  optimizer: "AdamW"
+  optimizer: "Momentum"
   nesterov: true
-  lr: 0.00004
-  weight_decay: 0.01
+  lr: 0.01
+  weight_decay: 0.0001
   n_epochs: 5
   decay_gamma: 0.95
 
