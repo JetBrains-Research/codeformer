@@ -38,13 +38,6 @@ model:
     num_layers: 8
     dim_feedforward: 2048
     use_begin_end_tokens: True
-  code_modelling_transformer:
-    d_model: 768
-    nhead: 8
-    dropout: 0.1
-    num_layers: 8
-    dim_feedforward: 2048
-    use_begin_end_tokens: True
 
 data:
   type:
@@ -77,10 +70,10 @@ trainer:
   log_every_n_steps: 10
 
 optimizer:
-  optimizer: "AdamW"
+  optimizer: 
   nesterov: true
-  lr: 0.00004
-  weight_decay: 0.01
+  lr:
+  weight_decay:
   n_epochs: 5
   decay_gamma: 0.95
 

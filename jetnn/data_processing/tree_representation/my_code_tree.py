@@ -16,7 +16,7 @@ class MyCodeTree:
         random.seed(10)
         sys.setrecursionlimit(10000)
 
-    def remove_comments(self, code, method_location=()):
+    def remove_comments(self, code, method_location=(0, 0)):
         return self._tree_sitter.remove_comments_from_code(code, method_location)
 
     @staticmethod

@@ -96,11 +96,11 @@ def train(config: DictConfig, cuda_devices):
             deterministic=True,
             check_val_every_n_epoch=params.val_every_epoch,
             log_every_n_steps=params.log_every_n_steps,
-            # logger=wandb_logger,
+            logger=wandb_logger,
             callbacks=[
                 lr_logger,
                 early_stopping_callback,
-                # checkpoint_callback,
+                checkpoint_callback,
                 print_epoch_result_callback,
                 progress_bar,
             ],
@@ -153,6 +153,15 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "-wk", "--wandb_key"
     )
+    arg_parser.add_argument(
+        "-opt", "--optimizer"
+    )
+    arg_parser.add_argument(
+        "-lr", "--learning_rate"
+    )
+    arg_parser.add_argument(
+        "-wd", "--weight_decay"
+    )
     args = arg_parser.parse_args()
     cuda_devices = [int(cd) for cd in args.cuda_devices]
     config = OmegaConf.load(args.config)
@@ -163,6 +172,9 @@ if __name__ == "__main__":
     config.val.dataloader.batch_size = int(args.batch_size)
     config.test.dataloader.batch_size = int(args.batch_size)
     config.wandb.key = args.wandb_key
+    config.optimizer.optimizer = args.optimizer
+    config.optimizer.lr = float(args.learning_rate)
+    config.optimizer.weight_decay = float(args.weight_decay)
 
     seed_everything(config.seed)
 
