@@ -64,7 +64,7 @@ wandb:
   project: codeformer
   group: null
   offline: false
-  key: ""
+  key: "5e2675f8a3c8340913e59614f17ee02a7b7f4351"
 
 trainer:
   gpu: 1
@@ -77,10 +77,10 @@ trainer:
   log_every_n_steps: 10
 
 optimizer:
-  optimizer: "Momentum"
+  optimizer: "AdamW"
   nesterov: true
-  lr: 0.01
-  weight_decay: 0.0001
+  lr: 0.00004
+  weight_decay: 0.01
   n_epochs: 5
   decay_gamma: 0.95
 
