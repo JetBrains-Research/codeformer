@@ -138,9 +138,32 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "-cd", "--cuda_devices", help="available cuda devices", type=list
     )
+    arg_parser.add_argument(
+        "-et", "--encode_type"
+    )
+    arg_parser.add_argument(
+        "-dt", "--data_type"
+    )
+    arg_parser.add_argument(
+        "-mcp", "--max_code_parts"
+    )
+    arg_parser.add_argument(
+        "-bs", "--batch_size"
+    )
+    arg_parser.add_argument(
+        "-wk", "--wandb_key"
+    )
     args = arg_parser.parse_args()
     cuda_devices = [int(cd) for cd in args.cuda_devices]
     config = OmegaConf.load(args.config)
+    config.model.encoder = args.encode_type
+    config.data.type = args.data_type
+    config.data.max_code_parts = int(args.max_code_parts)
+    config.train.dataloader.batch_size = int(args.batch_size)
+    config.val.dataloader.batch_size = int(args.batch_size)
+    config.test.dataloader.batch_size = int(args.batch_size)
+    config.wandb.key = args.wandb_key
+
     seed_everything(config.seed)
 
     if args.mode == "train":

@@ -6,7 +6,7 @@ progress_bar_refresh_rate: 1
 model:
   configuration:
 
-  encoder: my_transformer
+  encoder:
   decoder: transformer
 
   transformer:
@@ -47,16 +47,16 @@ model:
     use_begin_end_tokens: True
 
 data:
-  type: 'plain_code_ast'
-  root: '../../datasets/python_small'
+  type:
+  root: '../../datasets/python'
   path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   checkpoint_tokenizer: "Salesforce/codet5p-220m"
   train_new_tokenizer: False
   max_tokenizer_vocab: 20000
-  max_code_parts: 4096
+  max_code_parts:
   max_label_parts: 7
-  max_subsequence_size: 10
-  max_subsequences_number: 256
+  max_subsequence_size: 14
+  max_subsequences_number: 384
   programming_language: 'python'
   path_to_tree_sitter: '../vendor/tree-sitter-python'
 
@@ -64,7 +64,7 @@ wandb:
   project: codeformer
   group: null
   offline: false
-  key: "5e2675f8a3c8340913e59614f17ee02a7b7f4351"
+  key: ""
 
 trainer:
   gpu: 1
@@ -87,7 +87,7 @@ optimizer:
 train:
 
   dataloader:
-    batch_size: 16
+    batch_size:
     shuffle: True
     num_workers: 4
     prefetch_factor: 2
@@ -97,7 +97,7 @@ train:
 val:
 
   dataloader:
-    batch_size: 16
+    batch_size:
     num_workers: 4
     pin_memory: True
     persistent_workers: True
@@ -109,7 +109,7 @@ val:
 test:
 
   dataloader:
-    batch_size: 16
+    batch_size:
     num_workers: 4
     pin_memory: True
     persistent_workers: True
