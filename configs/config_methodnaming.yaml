@@ -41,22 +41,22 @@ model:
 
 data:
   type:
-  root: '../../datasets/python'
+  root: 
   path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   checkpoint_tokenizer: "Salesforce/codet5p-220m"
   train_new_tokenizer: False
   max_tokenizer_vocab: 20000
   max_code_parts:
   max_label_parts: 7
-  max_subsequence_size: 14
-  max_subsequences_number: 384
+  max_subsequence_size: 
+  max_subsequences_number:
   programming_language: 'python'
   path_to_tree_sitter: '../vendor/tree-sitter-python'
 
 wandb:
   project: codeformer
   group: null
-  offline: false
+  offline: true
   key: ""
 
 trainer:

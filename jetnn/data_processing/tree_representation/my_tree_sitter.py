@@ -4,27 +4,30 @@ from tree_sitter import Language, Parser
 class MyTreeSitter:
     def __init__(self, programming_language, path_to_tree_sitter):
         self._init = False
-        self._parser = None
+        # self._parser = None
+        self._pl = programming_language
         self._p_sum = list()
         self._tree = None
         self._current_node = None
-        path_to_build = "tree_sitter_build_" + programming_language + "/my-languages.so"
+        self._path_to_build = "tree_sitter_build_" + programming_language + "/my-languages.so"
         Language.build_library(
-            path_to_build,
+            self._path_to_build,
             [path_to_tree_sitter],
         )
-        language = Language(path_to_build, programming_language)
-        self._parser = Parser()
-        self._parser.set_language(language)
+        
 
     def process_code(self, code):
-        self._tree = self._parser.parse(bytes(code, "utf8"))
+        parser = Parser()
+        parser.set_language(Language(self._path_to_build, self._pl))
+        self._tree = parser.parse(bytes(code, "utf8"))
         self._current_node = self._tree.walk()
 
     def remove_comments_from_code(self, code, method_location):
+        parser = Parser()
+        parser.set_language(Language(self._path_to_build, self._pl))
         code_bytes = bytes(code, 'utf8')
         bytes_method_location = [len(bytes(code[:method_location[i]], 'utf8')) for i in range(2)]
-        tree = self._parser.parse(code_bytes)
+        tree = parser.parse(code_bytes)
         root_node = tree.root_node
         shift = 0
         shrink = 0

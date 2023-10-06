@@ -136,7 +136,10 @@ if __name__ == "__main__":
         "-c", "--config", help="Path to YAML configuration file", type=str
     )
     arg_parser.add_argument(
-        "-cd", "--cuda_devices", help="available cuda devices", type=list
+        "-cd", "--cuda_devices", help="available cuda devices", action='append'
+    )
+    arg_parser.add_argument(
+        "-dr", "--data_root"
     )
     arg_parser.add_argument(
         "-et", "--encode_type"
@@ -162,6 +165,12 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "-wd", "--weight_decay"
     )
+    arg_parser.add_argument(
+        "-mss", "--max_subsequence_size"
+    )
+    arg_parser.add_argument(
+        "-msn", "--max_subsequences_number"
+    )
     args = arg_parser.parse_args()
     cuda_devices = [int(cd) for cd in args.cuda_devices]
     config = OmegaConf.load(args.config)
@@ -175,6 +184,9 @@ if __name__ == "__main__":
     config.optimizer.optimizer = args.optimizer
     config.optimizer.lr = float(args.learning_rate)
     config.optimizer.weight_decay = float(args.weight_decay)
+    config.data.max_subsequence_size = int(args.max_subsequence_size)
+    config.data.max_subsequences_number = int(args.max_subsequences_number)
+    config.data.root = args.data_root
 
     seed_everything(config.seed)
 
