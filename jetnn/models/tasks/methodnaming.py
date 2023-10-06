@@ -23,8 +23,11 @@ from jetnn.models.encoders.transformers.my_transformer_encoder import (
 from jetnn.models.encoders.transformers.big_bird_encoder import (
     MethodNameBigBirdEncoder,
 )
-from jetnn.models.encoders.transformers.longformer_encoder import (
-    MethodNameLongformerEncoder,
+from jetnn.models.encoders.transformers.t5_encoder import (
+    MethodNameT5Encoder,
+)
+from jetnn.models.encoders.transformers.ret_net_encoder import (
+    MethodNameRetNetEncoder,
 )
 from jetnn.models.utils import configure_optimizers_alon
 
@@ -52,33 +55,36 @@ class MethodNamingModel(LightningModule):
         self._loss = SequenceCrossEntropyLoss(vocab.pad_id(), reduction="seq-mean")
 
     def _get_encoder(self) -> nn.Module:
-        if self._config.model.encoder == "transformer":
+        if self._config.model.encoder == "Transformer":
             return MethodNameTransformerEncoder(
-                self._config.model.transformer, self._vocab
+                self._config.model.Transformer, self._vocab
             )
-        if self._config.model.encoder == "my_transformer":
+        if self._config.model.encoder == "Codeformer":
             return MethodNameMyTransformerEncoder(
-                self._config.model.my_transformer,
+                self._config.model.Codeformer,
                 self._vocab,
                 self._config.data.max_subsequence_size,
-                self._config.model.big_bird,
             )
-        elif self._config.model.encoder == "big_bird":
-            return MethodNameBigBirdEncoder(self._config.model.big_bird, self._vocab)
-        elif self._config.model.encoder == "longformer":
-            return MethodNameLongformerEncoder(
-                self._config.model.longformer, self._vocab
+        elif self._config.model.encoder == "BigBird":
+            return MethodNameBigBirdEncoder(self._config.model.BigBird, self._vocab)
+        elif self._config.model.encoder == "T5":
+            return MethodNameT5Encoder(
+                self._config.model.T5, self._vocab
+            )
+        elif self._config.model.encoder == "RetNet":
+            return MethodNameRetNetEncoder(
+                self._config.model.T5, self._vocab
             )
         else:
             raise ValueError("Unknown encoder type")
 
     def _get_decoder(self) -> nn.Module:
-        if self._config.model.decoder == "transformer":
+        if self._config.model.decoder == "Transformer":
             return MethodNameTransformerDecoder(
-                self._config.model.transformer, self._vocab
+                self._config.model.Transformer, self._vocab
             )
-        elif self._config.model.decoder == "big_bird":
-            return MethodNameBigBirdDecoder(self._config.model.big_bird, self._vocab)
+        elif self._config.model.decoder == "BigBird":
+            return MethodNameBigBirdDecoder(self._config.model.BigBird, self._vocab)
         else:
             raise ValueError("Unknown decoder type")
 

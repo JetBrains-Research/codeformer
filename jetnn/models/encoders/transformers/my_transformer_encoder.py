@@ -3,7 +3,6 @@ from omegaconf import DictConfig
 from torch import nn, Tensor
 from torch.nn import Linear
 from torch.nn.modules.transformer import TransformerEncoder, TransformerEncoderLayer
-from transformers import BigBirdModel, BigBirdConfig
 from jetnn.data_processing.plain_code_ast_method.labeled_plain_code_ast import (
     BatchedLabeledCodeAstTokens,
 )
@@ -18,7 +17,6 @@ class MethodNameMyTransformerEncoder(nn.Module):
         config: DictConfig,
         vocab: Vocabulary,
         max_subsequence_size: int,
-        big_bird_config: DictConfig,
     ):
         super().__init__()
         self._vocab_size = len(vocab)

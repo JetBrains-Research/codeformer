@@ -7,15 +7,15 @@ model:
   configuration:
 
   encoder:
-  decoder: transformer
+  decoder: Transformer
 
-  transformer:
+  Transformer:
     d_model: 768
     nhead: 8
     dropout: 0.1
     num_layers: 8
     dim_feedforward: 2048
-  big_bird:
+  BigBird:
     d_model: 768
     nhead: 8
     dropout: 0.1
@@ -24,14 +24,13 @@ model:
     attention_type: "block_sparse"
     block_size: 64
     num_random_blocks: 3
-  longformer:
-    d_model: 512
+  T5:
+    d_model: 768
     nhead: 8
     dropout: 0.1
     num_layers: 8
     dim_feedforward: 2048
-    attention_window: 512
-  my_transformer:
+  codeformer:
     d_model: 768
     nhead: 8
     dropout: 0.1
