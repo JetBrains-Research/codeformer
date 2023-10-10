@@ -17,8 +17,8 @@ from jetnn.models.decoders.big_bird_decoder import MethodNameBigBirdDecoder
 from jetnn.models.encoders.transformers.transformer_encoder import (
     MethodNameTransformerEncoder,
 )
-from jetnn.models.encoders.transformers.my_transformer_encoder import (
-    MethodNameMyTransformerEncoder,
+from jetnn.models.encoders.transformers.codeformer_encoder import (
+    MethodNameCodeformerEncoder,
 )
 from jetnn.models.encoders.transformers.big_bird_encoder import (
     MethodNameBigBirdEncoder,
@@ -57,7 +57,7 @@ class MethodNamingModel(LightningModule):
                 self._config.model.Transformer, self._vocab
             )
         if self._config.model.encoder == "Codeformer":
-            return MethodNameMyTransformerEncoder(
+            return MethodNameCodeformerEncoder(
                 self._config.model.Codeformer,
                 self._vocab,
                 self._config.data.max_subsequence_size,

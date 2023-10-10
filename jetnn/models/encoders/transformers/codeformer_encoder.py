@@ -11,7 +11,7 @@ from jetnn.models.util_layers.positional_encoding import PositionalEncodingWithE
 from jetnn.models.util_layers.embedding import TokenEmbedding
 
 
-class MethodNameMyTransformerEncoder(nn.Module):
+class MethodNameCodeformerEncoder(nn.Module):
     def __init__(
         self,
         config: DictConfig,
