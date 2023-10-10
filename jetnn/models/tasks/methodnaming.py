@@ -26,9 +26,6 @@ from jetnn.models.encoders.transformers.big_bird_encoder import (
 from jetnn.models.encoders.transformers.t5_encoder import (
     MethodNameT5Encoder,
 )
-from jetnn.models.encoders.transformers.ret_net_encoder import (
-    MethodNameRetNetEncoder,
-)
 from jetnn.models.utils import configure_optimizers_alon
 
 
@@ -69,10 +66,6 @@ class MethodNamingModel(LightningModule):
             return MethodNameBigBirdEncoder(self._config.model.BigBird, self._vocab)
         elif self._config.model.encoder == "T5":
             return MethodNameT5Encoder(
-                self._config.model.T5, self._vocab
-            )
-        elif self._config.model.encoder == "RetNet":
-            return MethodNameRetNetEncoder(
                 self._config.model.T5, self._vocab
             )
         else:
