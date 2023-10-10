@@ -9,3 +9,4 @@ bad_samples.log
 .pyc
 .idea
 lightning_logs/
+jetnn/runners/tree_sitter_build*
