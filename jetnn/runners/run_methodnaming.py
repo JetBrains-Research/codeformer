@@ -69,7 +69,8 @@ def train(config: DictConfig, cuda_devices):
     print_epoch_result_callback = PrintEpochResultCallback(after_test=False)
     lr_logger = LearningRateMonitor("step")
     progress_bar = TQDMProgressBar(refresh_rate=config.progress_bar_refresh_rate)
-
+    
+    accumulated_grad_batches = int(params.effective_batch_size) // int(config.train.dataloader.batch_size)
     if torch.cuda.is_available():
         trainer = Trainer(
             max_epochs=params.n_epochs,
@@ -87,7 +88,7 @@ def train(config: DictConfig, cuda_devices):
                 print_epoch_result_callback,
                 progress_bar,
             ],
-            accumulate_grad_batches=7,
+            accumulate_grad_batches=accumulated_grad_batches,
         )
     else:
         trainer = Trainer(
@@ -104,7 +105,7 @@ def train(config: DictConfig, cuda_devices):
                 print_epoch_result_callback,
                 progress_bar,
             ],
-            accumulate_grad_batches=7,
+            accumulate_grad_batches=accumulated_grad_batches,
         )
 
     trainer.fit(model=model, datamodule=data_module)
