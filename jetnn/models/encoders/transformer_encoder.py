@@ -11,7 +11,7 @@ from jetnn.models.util_layers.positional_encoding import PositionalEncodingWithE
 from jetnn.models.util_layers.embedding import TokenEmbedding
 
 
-class MethodNameTransformerEncoder(nn.Module):
+class TransformerEncoder(nn.Module):
     def __init__(self, config: DictConfig, vocab: Vocabulary):
         super().__init__()
         self._vocab_size = len(vocab)

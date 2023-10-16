@@ -12,30 +12,18 @@ from torchmetrics import MetricCollection, Metric
 
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
 from jetnn.metrics.chrf import ChrF
-from jetnn.models.decoders.transformer_decoder import MethodNameTransformerDecoder
-from jetnn.models.decoders.big_bird_decoder import MethodNameBigBirdDecoder
-from jetnn.models.encoders.transformer_encoder import (
-    TransformerEncoder,
-)
-from jetnn.models.encoders.codeformer_encoder import (
-    CodeformerEncoder,
-)
-from jetnn.models.encoders.big_bird_encoder import (
-    BigBirdEncoder,
-)
-from jetnn.models.encoders.t5_encoder import (
-    T5Encoder,
+from jetnn.models.lm.codeformer_lm import (
+    CodeformerLM,
 )
 from jetnn.models.utils import configure_optimizers_alon
 
 
-class MethodNamingModel(LightningModule):
+class LanguageModelingModel(LightningModule):
     def __init__(self, config: DictConfig, vocab: Vocabulary) -> None:
         super().__init__()
         self._config = config
         self._vocab = vocab
-        self._encoder = self._get_encoder()
-        self._decoder = self._get_decoder()
+        self._lm = self._get_lm()
 
         metrics: Dict[str, Metric] = {
             f"{holdout}_f1": SequentialF1Score(
@@ -51,33 +39,11 @@ class MethodNamingModel(LightningModule):
         self._metrics = MetricCollection(metrics)
         self._loss = SequenceCrossEntropyLoss(vocab.pad_id(), reduction="seq-mean")
 
-    def _get_encoder(self) -> nn.Module:
-        if self._config.model.encoder == "Transformer":
-            return TransformerEncoder(
-                self._config.model.Transformer, self._vocab
+    def _get_lm(self) -> nn.Module:
+        if self._config.model.LM == "Codeformer":
+            return CodeformerLM(
+                self._config.model.CodeformerLM, self._vocab
             )
-        if self._config.model.encoder == "Codeformer":
-            return CodeformerEncoder(
-                self._config.model.Codeformer,
-                self._vocab,
-                self._config.data.max_subsequence_size,
-            )
-        elif self._config.model.encoder == "BigBird":
-            return BigBirdEncoder(self._config.model.BigBird, self._vocab)
-        elif self._config.model.encoder == "T5":
-            return T5Encoder(
-                self._config.model.T5, self._vocab
-            )
-        else:
-            raise ValueError("Unknown encoder type")
-
-    def _get_decoder(self) -> nn.Module:
-        if self._config.model.decoder == "Transformer":
-            return MethodNameTransformerDecoder(
-                self._config.model.Transformer, self._vocab
-            )
-        elif self._config.model.decoder == "BigBird":
-            return MethodNameBigBirdDecoder(self._config.model.BigBird, self._vocab)
         else:
             raise ValueError("Unknown decoder type")
 
@@ -87,9 +53,9 @@ class MethodNamingModel(LightningModule):
     def forward(self, batch, step: Optional[str]) -> Any:
         if step is None:
             step = "test"
-        encoded = self._encoder(batch)
-        return self._decoder(encoded, batch, step)
+        return self._lm(batch, step)
 
+    #TODO: rework
     def _shared_step(self, batch, step: str) -> Dict:
         # [seq length; batch size; vocab size]
         logits = self(batch, step)
@@ -129,8 +95,6 @@ class MethodNamingModel(LightningModule):
     def test_step(self, batch, batch_idx: int) -> Dict:  # type: ignore
         result = self._shared_step(batch, "test")
         return result["test/loss"]
-
-    # ========== On epoch end ==========
 
     def _shared_epoch_end(self, step_outputs, step: str) -> None:
         with torch.no_grad():
