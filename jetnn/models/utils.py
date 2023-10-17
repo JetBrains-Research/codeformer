@@ -127,9 +127,9 @@ def configure_optimizers_alon(
 
 
 def transform_sequence_according_to_split(
-    src_sequence, sequence_split, num_splits, max_subsequence_size
+    src_sequence, sequence_split, num_splits, max_chunk_size
 ):
-    result = torch.zeros((num_splits, max_subsequence_size), dtype=torch.long)
+    result = torch.zeros((num_splits, max_chunk_size), dtype=torch.long)
     p_sum = 0
     for split_index in range(num_splits):
         split_size = sequence_split[split_index]
@@ -142,11 +142,11 @@ def transform_sequence_according_to_split_with_begin_end_tokens(
     src_sequence,
     sequence_split,
     num_splits,
-    max_subsequence_size,
+    max_chunk_size,
     start_token,
     end_token,
 ):
-    result = torch.zeros((num_splits, max_subsequence_size + 2), dtype=torch.long)
+    result = torch.zeros((num_splits, max_chunk_size + 2), dtype=torch.long)
     p_sum = 0
     for split_index in range(num_splits):
         split_size = sequence_split[split_index]

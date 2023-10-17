@@ -1,0 +1,119 @@
+checkpoint: "None"
+
+seed: 7
+progress_bar_refresh_rate: 1
+
+model:
+
+  LM: "CodeformerLM"
+
+  CodeformerLM:
+    token_encoder_config:
+      n_embd: 768
+      n_layer: 12
+      n_head: 12
+      output_hidden_states: True
+      # n_inner will be 4 * n_embd by default
+  
+    split_encoder_config:
+      n_embd: 768
+      n_layer: 12
+      n_head: 12
+      is_decoder: True # this is because we want to restrict split encoder looking ahead and
+                      # decoder applies square mask automatically 
+      # n_inner will be 4 * n_embd by default
+  
+    decoder_config:
+      n_embd: 768
+      n_layer: 12
+      n_head: 12
+      is_decoder: True
+    
+    # temporary, will be removed in the future
+    tokenizer_special_tokens:
+      pad_id: 0
+      bos_id: 2
+      eos_id: 3
+      labels_pad_id: -100
+    
+    # temporary, will be removed in the future
+    splits:
+      max_split_size: 14
+      max_splits_number: 384
+      add_begin_end_tokens_in_splits: True
+
+data:
+  type: "plain_code"
+  root: "../../datasets/LM_test"
+  path: '../../pretrained/plain_code_accumulate_spaces.vocab'
+  checkpoint_tokenizer: "Salesforce/codet5p-220m"
+  train_new_tokenizer: False
+  max_tokenizer_vocab: 20000
+  max_text_tokens: 2048
+  max_chunk_size: 14
+  max_chunks_number: 384
+  programming_language: 'python'
+  path_to_tree_sitter: '../vendor/tree-sitter-python'
+
+wandb:
+  project: codeformer
+  group: null
+  offline: false
+  key: ""
+
+trainer:
+  effective_batch_size: 512
+  gpu: true
+  n_epochs: 5
+  patience: 3
+  clip_norm: 5
+  teacher_forcing: 1.0
+  val_every_epoch: 1
+  save_every_epoch: 1
+  log_every_n_steps: 10
+
+optimizer:
+  optimizer: "Momentum"
+  nesterov: true
+  lr: 0.01
+  weight_decay: 0.0001
+  n_epochs: 5
+  decay_gamma: 0.95
+
+train:
+
+  dataloader:
+    batch_size: 32
+    shuffle: True
+    num_workers: 4
+    prefetch_factor: 2
+    pin_memory: True
+    persistent_workers: True
+
+val:
+
+  dataloader:
+    batch_size: 32
+    num_workers: 4
+    pin_memory: True
+    persistent_workers: True
+
+  generation:
+    mrr_k: 1
+    acc_k: 1
+
+test:
+
+  dataloader:
+    batch_size: 32
+    num_workers: 4
+    pin_memory: True
+    persistent_workers: True
+
+  generation:
+    method: "greedy"
+    gen_check_interval: 9600
+    bandwidth: 5
+    max_steps: 1000
+    mrr_k: 1
+    acc_k: 1

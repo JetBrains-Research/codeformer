@@ -22,6 +22,7 @@ class MyTextTree:
 
     @staticmethod
     def _post_process_sequence_split(sequence_split, max_subtree_size):
+        sequence_split = list(filter(lambda x: x != 0, sequence_split))
         sequence_split = split_big_leaves(sequence_split, max_subtree_size)
         sequence_split = merge_left(sequence_split, max_subtree_size)
         return sequence_split
@@ -36,38 +37,58 @@ class MyTextTree:
             self._root.add_children(self._init_traverse_tree(spacy_root))
 
         sequence_split = self._get_sequence_split(self._root, max_subtree_size)
-        print("initial sequence:", [node.get_num_tokens() for node in sequence_split])
-        return MyTextTree._post_process_sequence_split(
-            [node.get_num_tokens() for node in sequence_split], max_subtree_size
+        result = MyTextTree._post_process_sequence_split(
+            sequence_split, max_subtree_size
         )
+        return result
 
     def _init_traverse_tree(self, spacy_node):
         start_pos = spacy_node.idx
         end_pos = start_pos + len(spacy_node.text)
         node = MyNode(start_pos, end_pos)
-        is_leaf = True
+        left_children = list()
+        right_children = list()
 
-        for chile_spacy_node in spacy_node.children:
-            is_leaf = False
-            child_node = self._init_traverse_tree(chile_spacy_node)
+        for child_space_node in spacy_node.children:
+            if child_space_node.idx < spacy_node.idx:
+                left_children.append(child_space_node)
+            else:
+                right_children.append(child_space_node)    
+
+        for child_spacy_node in left_children:
+            child_node = self._init_traverse_tree(child_spacy_node)
             node.add_children(child_node)
 
-        if is_leaf:
-            while node.contains_token(self._tokens.get_current_token()):
-                node.add_token(self._tokens.get_current_token_info())
-                self._tokens.increase_index()
+        while node.contains_token(self._tokens.get_current_token()):
+            node.add_token(self._tokens.get_current_token_info())
+            self._tokens.increase_index()
+
+        for child_spacy_node in right_children:
+            child_node = self._init_traverse_tree(child_spacy_node)
+            node.add_children(child_node)
 
         return node
 
     def _get_sequence_split(self, start_node, max_subtree_size):
         subtree_split = list()
         if start_node.get_num_tokens() < max_subtree_size:
-            subtree_split.append(start_node)
+            subtree_split.append(start_node.get_num_tokens())
         else:
-            for chile_node in start_node.get_children():
-                subtree_split.extend(
-                    self._get_sequence_split(chile_node, max_subtree_size)
-                )
+            left_subtree_split = list()
+            right_subtree_split = list()
+            for child_node in start_node.get_children():
+                if child_node.get_current_node_start_end()[0] < start_node.get_current_node_start_end()[0]:
+                    left_subtree_split.extend(
+                        self._get_sequence_split(child_node, max_subtree_size)
+                    )
+                else:
+                    right_subtree_split.extend(
+                        self._get_sequence_split(child_node, max_subtree_size)
+                    )
+            subtrees_sum_size = sum(left_subtree_split) + sum(right_subtree_split)
+            subtree_split.extend(left_subtree_split)
+            subtree_split.append(start_node.get_num_tokens() - subtrees_sum_size)
+            subtree_split.extend(right_subtree_split)
         return subtree_split
 
 

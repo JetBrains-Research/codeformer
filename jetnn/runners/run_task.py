@@ -48,7 +48,7 @@ def model_by_task(task: str, config: DictConfig, vocab: PlainCodeVocabulary):
 def train(config: DictConfig, task: str, cuda_devices: list) -> None:
     params = config.trainer
 
-    data_module = data_module_by_config(config)
+    data_module = data_module_by_config(config, task)
 
     wandb.login(key=config.wandb.key)
     wandb_logger = WandbLogger(
@@ -105,7 +105,7 @@ def test(config: DictConfig, task: str, cuda_devices: list) -> None:
     if config["checkpoint"] == "None":
         raise RuntimeError("Wrong config: No checkpoint path")
 
-    data_module = data_module_by_config(config)
+    data_module = data_module_by_config(config, task)
     model = model_by_task(task, config, data_module.vocabulary)
     if torch.cuda.is_available():
         trainer = Trainer(accelerator="gpu", devices=cuda_devices)
@@ -118,10 +118,10 @@ if __name__ == "__main__":
     torch.set_float32_matmul_precision("medium")
     arg_parser = ArgumentParser()
     arg_parser.add_argument(
-        "task", help="Task name", choices=["language_modeling", "code_modeling", "method_name_prediction"]
+        "-task", help="Task name", choices=["language_modeling", "code_modeling", "method_name_prediction"]
     )
     arg_parser.add_argument(
-        "mode", help="Mode to run script", choices=["train", "test"]
+        "-mode", help="Mode to run script", choices=["train", "test"]
     )
     arg_parser.add_argument(
         "-c", "--config", help="Path to YAML configuration file", type=str
@@ -136,6 +136,6 @@ if __name__ == "__main__":
     seed_everything(config.seed)
 
     if args.mode == "train":
-        train(config, config.task, cuda_devices)
+        train(config, args.task, cuda_devices)
     elif args.mode == "test":
-        test(config, config.task, cuda_devices)
+        test(config, args.task, cuda_devices)

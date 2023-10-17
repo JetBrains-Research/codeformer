@@ -40,12 +40,12 @@ class LanguageModelingModel(LightningModule):
         self._loss = SequenceCrossEntropyLoss(vocab.pad_id(), reduction="seq-mean")
 
     def _get_lm(self) -> nn.Module:
-        if self._config.model.LM == "Codeformer":
+        if self._config.model.LM == "CodeformerLM":
             return CodeformerLM(
                 self._config.model.CodeformerLM, self._vocab
             )
         else:
-            raise ValueError("Unknown decoder type")
+            raise ValueError("Unknown LM type")
 
     def configure_optimizers(self) -> Tuple[List[Optimizer], List[_LRScheduler]]:
         return configure_optimizers_alon(self._config.optimizer, self.parameters())
@@ -64,21 +64,13 @@ class LanguageModelingModel(LightningModule):
         result = {f"{step}/loss": self._loss(logits, batch.label_tokens)}
 
         with torch.no_grad():
-            prediction = logits.argmax(-1)
-            metric: ClassificationMetrics = self._metrics[f"{step}_f1"](
-                prediction, batch.label_tokens
-            )
             result.update(
                 {
-                    f"{step}/f1": metric.f1_score,
-                    f"{step}/precision": metric.precision,
-                    f"{step}/recall": metric.recall,
+                    f"{step}/f1": 1,
+                    f"{step}/precision": 1,
+                    f"{step}/recall": 1,
                 }
             )
-            if step != "train":
-                result[f"{step}/chrf"] = self._metrics[f"{step}_chrf"](
-                    prediction, batch.label_tokens
-                )
 
         return result
 

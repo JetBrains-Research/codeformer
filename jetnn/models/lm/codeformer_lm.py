@@ -4,11 +4,14 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from transformers import GPT2Config, GPT2Model, GPT2LMHeadModel
-
+from jetnn.data_processing.tasks.language_modeling import (
+    BatchedTextTokens
+)
 
 class CodeformerLM(nn.Module):
-    def __init__(self, codeformer_config: DictConfig, vocab_size: int):
+    def __init__(self, codeformer_config: DictConfig, vocab):
         super().__init__()
+        vocab_size = len(vocab)
         self._device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self._special_tokens = codeformer_config.tokenizer_special_tokens
@@ -101,21 +104,23 @@ class CodeformerLM(nn.Module):
 
     # keep in mind that sum(split_sizes[i]) may be less that len(input_ids[i]) for any i
     def forward(
-            self, input_ids: torch.Tensor, labels: torch.Tensor, split_sizes: torch.Tensor
-    ) -> LMTrainOutput:
-        splits = self._generate_samples_from_splits(input_ids, split_sizes)
-        attention_mask = (splits == self._special_tokens.pad_id)
-        context_hidden_states = self._token_encoder(
-            input_ids=splits, attention_mask=attention_mask
-        ).hidden_states
-        input_embeddings, context = context_hidden_states[0], context_hidden_states[-1]
-        context = self._pad_to_match_linear_layer(context, split_sizes)
-        context = context.permute(0, 1, 3, 2)
-        context = self._split_accumulator_linear(context).squeeze(dim=3)
-        # square mask has to be applied here automatically
-        context = self._split_encoder(inputs_embeds=context).last_hidden_state 
-        context, processed_labels = self._generate_input_and_labels_for_decoder(input_embeddings, labels, context, split_sizes)
-        print("context", context.size())
-        print("processed_labels", processed_labels.size())
-        lm_casual_output = self._decoder(inputs_embeds=context, labels=processed_labels)
-        return lm_casual_output.logits, lm_casual_output.loss, processed_labels
+            self, batch: BatchedTextTokens, step: str
+    ):
+        
+        # splits = self._generate_samples_from_splits(input_ids, split_sizes)
+        # attention_mask = (splits == self._special_tokens.pad_id)
+        # context_hidden_states = self._token_encoder(
+        #     input_ids=splits, attention_mask=attention_mask
+        # ).hidden_states
+        # input_embeddings, context = context_hidden_states[0], context_hidden_states[-1]
+        # context = self._pad_to_match_linear_layer(context, split_sizes)
+        # context = context.permute(0, 1, 3, 2)
+        # context = self._split_accumulator_linear(context).squeeze(dim=3)
+        # # square mask has to be applied here automatically
+        # context = self._split_encoder(inputs_embeds=context).last_hidden_state 
+        # context, processed_labels = self._generate_input_and_labels_for_decoder(input_embeddings, labels, context, split_sizes)
+        # print("context", context.size())
+        # print("processed_labels", processed_labels.size())
+        # lm_casual_output = self._decoder(inputs_embeds=context, labels=processed_labels)
+        # return lm_casual_output.logits, lm_casual_output.loss, processed_labels
+        return None

@@ -38,5 +38,5 @@ class BatchedTextTokens:
         return self
 
     def move_to_device(self, device: torch.device):
-        self.text_tokens = self.code_tokens.to(device)
+        self.text_tokens = self.text_tokens.to(device)
         self.batch_split = self.batch_split.to(device)
