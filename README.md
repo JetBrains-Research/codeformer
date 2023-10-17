@@ -1,17 +1,36 @@
-# JetNN
+# Codeformer
 
 [WIP] A library for running Codeformer model.
 
 ## Supported tasks
 
 - [x] Method name prediction
-- [x] Code modelling
-- [ ] Comment generation
-- [ ] And more...
+- [x] Code modeling
+- [x] Language modeling
+
+## Installation
+0. Go to the root of the project:
+```bash
+cd codeformer
+```
+1. Install the dependencies from requirements.txt:
+```bash
+pip -r requirements.txt
+```
+2. Install spacy and download additional packages:
+```bash
+pip install -U pip setuptools wheel
+pip install -U spacy
+python -m spacy download en_core_web_sm
+```
+3. Update git submodules to fetch tree-sitter:
+```bash
+git submodule update --init --recursive
+```
 
 ## How to run
 
-Simply install the dependecies from requirements.txt and then run run_methodnaming.py script from jetnn/runners/ folder using simmilar command: 
+Run the run_task.py script from jetnn/runners/ folder using similar command: 
 ```bash
-python3 run_methodnaming.py train -c ../../configs/config_methodnaming.yaml -cd 0 -dr ../../datasets/python/python_small -et BigBird -dt plain_code -mcp 2048 -bs 16 -wk 5e2675f8a3c8340913e59614f17ee02a7b7f4351 -opt Momentum -lr 0.01 -wd 0.0001 -mss 14 -msn 384
+python3 run_task.py -task=language_modeling -mode=train -c ../../configs/config_language_modeling.yaml -cd 0
 ```
