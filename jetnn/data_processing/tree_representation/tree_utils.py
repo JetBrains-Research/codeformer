@@ -38,8 +38,8 @@ class MyNode:
 
 
 class MyTokens:
-    def __init__(self, text, tokens, tokens_process_function):
-        self._tokens = [tokens_process_function(token) for token in tokens]
+    def __init__(self, text, tokens):
+        self._tokens = tokens
         self._tokens_positions = list()
         current_position = 0
         for token in self._tokens:

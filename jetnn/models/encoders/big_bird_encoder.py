@@ -2,8 +2,8 @@ from omegaconf import DictConfig
 from torch import nn, Tensor
 from transformers import BigBirdModel, BigBirdConfig
 
-from jetnn.data_processing.plain_code_method.labeled_plain_code import (
-    BatchedLabeledCodeTokens,
+from jetnn.data_processing.base_data_classes import (
+    BatchedData,
 )
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
 
@@ -26,8 +26,8 @@ class BigBirdEncoder(nn.Module):
         )
         self._encoder = BigBirdModel(big_bird_config)
 
-    def forward(self, batch: BatchedLabeledCodeTokens) -> Tensor:
-        src_sequence = batch.code_tokens.permute(1, 0)
+    def forward(self, batch: BatchedData) -> Tensor:
+        src_sequence = batch.text_tokens.permute(1, 0)
         src_key_padding_mask = src_sequence == self._pad_token
         src_key_padding_mask = src_key_padding_mask.long()
         return self._encoder(

@@ -3,8 +3,8 @@ from omegaconf import DictConfig
 from torch import nn, Tensor
 from torch.nn import Linear
 from torch.nn.modules.transformer import TransformerEncoder, TransformerEncoderLayer
-from jetnn.data_processing.tasks.language_modeling import (
-    BatchedTextTokens
+from jetnn.data_processing.base_data_classes import (
+    BatchedData,
 )
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
 from jetnn.models.util_layers.positional_encoding import PositionalEncodingWithEmbedding
@@ -50,8 +50,8 @@ class CodeformerEncoder(nn.Module):
             p_sum += split
         return result
 
-    def forward(self, batch: BatchedTextTokens) -> Tensor:
-        src_sequence = batch.code_tokens
+    def forward(self, batch: BatchedData) -> Tensor:
+        src_sequence = batch.text_tokens
         src_key_padding_mask = src_sequence == self._pad_token
         x = self._positional_encoding(self._embedding(src_sequence))
         x = self._encoder_1(x, src_key_padding_mask=src_key_padding_mask)

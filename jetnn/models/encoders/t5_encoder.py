@@ -2,8 +2,8 @@ from omegaconf import DictConfig
 from torch import nn, Tensor
 from transformers import T5EncoderModel, T5Config
 
-from jetnn.data_processing.plain_code_method.labeled_plain_code import (
-    BatchedLabeledCodeTokens,
+from jetnn.data_processing.base_data_classes import (
+    BatchedData,
 )
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
 
@@ -24,8 +24,8 @@ class T5Encoder(nn.Module):
         )
         self._encoder = T5EncoderModel(t5_config)
 
-    def forward(self, batch: BatchedLabeledCodeTokens) -> Tensor:
-        src_sequence = batch.code_tokens.permute(1, 0)
+    def forward(self, batch: BatchedData) -> Tensor:
+        src_sequence = batch.text_tokens.permute(1, 0)
         src_key_padding_mask = src_sequence == self._pad_token
         src_key_padding_mask = src_key_padding_mask.long()
         return self._encoder(

@@ -1,10 +1,9 @@
-from tree_sitter import Language, Parser
+from tree_sitter import Language, Parser, Node
 
 
 class MyTreeSitter:
-    def __init__(self, programming_language, path_to_tree_sitter):
+    def __init__(self, programming_language: str, path_to_tree_sitter: str):
         self._init = False
-        # self._parser = None
         self._pl = programming_language
         self._p_sum = list()
         self._tree = None
@@ -16,13 +15,13 @@ class MyTreeSitter:
         )
         
 
-    def process_code(self, code):
+    def process_code(self, code: str) -> None:
         parser = Parser()
         parser.set_language(Language(self._path_to_build, self._pl))
         self._tree = parser.parse(bytes(code, "utf8"))
         self._current_node = self._tree.walk()
 
-    def remove_comments_from_code(self, code, method_location):
+    def remove_comments_from_code(self, code: str, method_location: tuple[int, int]) -> (str, str, tuple[int, int]):
         parser = Parser()
         parser.set_language(Language(self._path_to_build, self._pl))
         code_bytes = bytes(code, 'utf8')
@@ -33,7 +32,7 @@ class MyTreeSitter:
         shrink = 0
         comment_nodes = []
 
-        def walk(node):
+        def walk(node: Node) -> None:
             if "comment" in node.type.lower():
                 comment_nodes.append(node)
             for child in node.children:
@@ -61,20 +60,20 @@ class MyTreeSitter:
         clean_code = str(clean_bytes, 'utf8')
         return clean_code, comment_text, new_method_location
 
-    def get_current_node(self):
+    def get_current_node(self) -> Node:
         return self._current_node
 
-    def get_start_end_bytes(self):
+    def get_start_end_bytes(self) -> tuple[int, int]:
         return self._current_node.node.start_byte, self._current_node.node.end_byte
 
-    def goto_first_child(self):
+    def goto_first_child(self) -> Node:
         return self._current_node.goto_first_child()
 
-    def goto_next_child(self):
+    def goto_next_child(self) -> Node:
         return self._current_node.goto_next_sibling()
 
-    def goto_parent(self):
+    def goto_parent(self) -> Node:
         return self._current_node.goto_parent()
 
-    def reset(self):
+    def reset(self) -> None:
         self._current_node = self._tree.walk()

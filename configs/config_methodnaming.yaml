@@ -39,16 +39,16 @@ model:
     use_begin_end_tokens: True
 
 data:
-  type: "plain_code"
   root: "../../datasets/python/python_small"
-  path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   checkpoint_tokenizer: "Salesforce/codet5p-220m"
+  vocab_path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   train_new_tokenizer: False
   max_tokenizer_vocab: 20000
   max_code_parts: 2048
   max_label_parts: 7
-  max_subsequence_size: 14
-  max_subsequences_number: 384
+  use_ast_splitter: True
+  max_chunk_size: 14
+  max_chunks_number: 384
   programming_language: 'python'
   path_to_tree_sitter: '../vendor/tree-sitter-python'
 
@@ -60,7 +60,7 @@ wandb:
 
 trainer:
   effective_batch_size: 512
-  gpu:
+  gpu: true
   n_epochs: 5
   patience: 3
   clip_norm: 5

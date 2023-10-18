@@ -3,6 +3,10 @@ from typing import Iterable, Union, List
 
 
 class Vocabulary(ABC):
+
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
+
     @abstractmethod
     def __len__(self) -> int:
         ...

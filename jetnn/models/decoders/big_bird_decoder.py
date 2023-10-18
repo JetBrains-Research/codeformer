@@ -4,13 +4,13 @@ from torch import nn, Tensor
 from torch.nn import Linear
 from transformers import BigBirdModel, BigBirdConfig
 
-from jetnn.data_processing.plain_code_method.labeled_plain_code import (
-    BatchedLabeledCodeTokens,
+from jetnn.data_processing.base_data_classes import (
+    BatchedData,
 )
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
 
 
-class MethodNameBigBirdDecoder(nn.Module):
+class BigBirdDecoder(nn.Module):
     def __init__(self, config: DictConfig, vocab: Vocabulary):
         super().__init__()
         self._vocab_size = len(vocab)
@@ -43,7 +43,7 @@ class MethodNameBigBirdDecoder(nn.Module):
         return self._linear(decoded.last_hidden_state)
 
     def forward(
-        self, batched_encoder_output: Tensor, batch: BatchedLabeledCodeTokens, step: str
+        self, batched_encoder_output: Tensor, batch: BatchedData, step: str
     ) -> Tensor:
         device = batched_encoder_output.device
         target_sequence = batch.label_tokens.permute(1, 0)

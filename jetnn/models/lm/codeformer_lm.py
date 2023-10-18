@@ -4,8 +4,8 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from transformers import GPT2Config, GPT2Model, GPT2LMHeadModel
-from jetnn.data_processing.tasks.language_modeling import (
-    BatchedTextTokens
+from jetnn.data_processing.base_data_classes import (
+    BatchedData
 )
 
 class CodeformerLM(nn.Module):
@@ -104,7 +104,7 @@ class CodeformerLM(nn.Module):
 
     # keep in mind that sum(split_sizes[i]) may be less that len(input_ids[i]) for any i
     def forward(
-            self, batch: BatchedTextTokens, step: str
+            self, batch: BatchedData, step: str
     ):
         
         # splits = self._generate_samples_from_splits(input_ids, split_sizes)

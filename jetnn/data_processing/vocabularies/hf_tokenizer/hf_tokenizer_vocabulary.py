@@ -6,9 +6,9 @@ from transformers import PreTrainedTokenizerFast, AutoTokenizer
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
 
 
-class PlainCodeVocabulary(Vocabulary):
+class HFTokenizerVocabulary(Vocabulary):
     def __init__(self, tokenizer: PreTrainedTokenizerFast):
-        self.tokenizer = tokenizer
+        super().__init__(tokenizer=tokenizer)
 
     def __len__(self) -> int:
         return self.tokenizer.vocab_size
@@ -32,7 +32,7 @@ class PlainCodeVocabulary(Vocabulary):
         return self.tokenizer.unk_token_id
 
 
-def from_holdout(file: str, config: DictConfig) -> PlainCodeVocabulary:
+def from_holdout(file: str, config: DictConfig) -> HFTokenizerVocabulary:
     tokenizer = AutoTokenizer.from_pretrained(config.checkpoint_tokenizer)
     print(config.checkpoint_tokenizer)
     if config.train_new_tokenizer:
@@ -41,9 +41,9 @@ def from_holdout(file: str, config: DictConfig) -> PlainCodeVocabulary:
             for line in f:
                 code = json.loads(line)["code"]
                 training_corpus.extend(code.split())
-        return PlainCodeVocabulary(
+        return HFTokenizerVocabulary(
             tokenizer.train_new_from_iterator(
                 training_corpus, config.max_tokenizer_vocab
             )
         )
-    return PlainCodeVocabulary(tokenizer)
+    return HFTokenizerVocabulary(tokenizer)

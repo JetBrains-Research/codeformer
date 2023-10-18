@@ -9,16 +9,15 @@ from torch.nn.modules.transformer import (
     Transformer,
     TransformerDecoder,
 )
-
-from jetnn.data_processing.plain_code_method.labeled_plain_code import (
-    BatchedLabeledCodeTokens,
+from jetnn.data_processing.base_data_classes import (
+    BatchedData,
 )
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
 from jetnn.models.util_layers.positional_encoding import PositionalEncodingWithEmbedding
 from jetnn.models.util_layers.embedding import TokenEmbedding
 
 
-class MethodNameTransformerDecoder(nn.Module):
+class MyTransformerDecoder(nn.Module):
     def __init__(self, config: DictConfig, vocab: Vocabulary):
         super().__init__()
         self._vocab_size = len(vocab)
@@ -55,7 +54,7 @@ class MethodNameTransformerDecoder(nn.Module):
         return self._linear(decoded)
 
     def forward(
-        self, batched_encoder_output: Tensor, batch: BatchedLabeledCodeTokens, step: str
+        self, batched_encoder_output: Tensor, batch: BatchedData, step: str
     ) -> Tensor:
         device = batched_encoder_output.device
         target_sequence = batch.label_tokens.permute(1, 0)

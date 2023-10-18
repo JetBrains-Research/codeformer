@@ -7,8 +7,8 @@ from jetnn.data_processing.tree_representation.tree_utils import MyTokens, MyNod
 class MyCodeTree:
     def __init__(
             self,
-            programming_language="java",
-            path_to_tree_sitter="../vendor/tree-sitter-java",
+            programming_language: str="java",
+            path_to_tree_sitter: str="../vendor/tree-sitter-java",
     ):
         self._tree_sitter = MyTreeSitter(programming_language, path_to_tree_sitter)
         self._tokens = None
@@ -16,16 +16,16 @@ class MyCodeTree:
         random.seed(10)
         sys.setrecursionlimit(10000)
 
-    def remove_comments(self, code, method_location=(0, 0)):
+    def remove_comments(self, code: str, method_location: tuple[int, int]=(0, 0)) -> (str, str, tuple[int, int]):
         return self._tree_sitter.remove_comments_from_code(code, method_location)
 
     @staticmethod
-    def _post_process_sequence_split(sequence_split, max_subtree_size):
+    def _post_process_sequence_split(sequence_split: list[int], max_subtree_size: int) -> list[int]:
         sequence_split = split_big_leaves(sequence_split, max_subtree_size)
         sequence_split = merge_left(sequence_split, max_subtree_size)
         return sequence_split
 
-    def process_code_random(self, tokens, max_subtree_size):
+    def process_code_random(self, tokens: list[str], max_subtree_size: int) -> list[int]:
         result = list()
         cnt = 0
         while cnt < len(tokens):
@@ -36,13 +36,12 @@ class MyCodeTree:
 
     def process_code(
             self,
-            java_code,
-            tokens,
-            max_subtree_size=16,
-            tokens_process_function=lambda x: x,
-    ):
+            java_code: str,
+            tokens: list[str],
+            max_subtree_size: int =16,
+    ) -> list[int]:
         self._tree_sitter.process_code(java_code)
-        self._tokens = MyTokens(java_code, tokens, tokens_process_function)
+        self._tokens = MyTokens(java_code, tokens)
         self._root = self._init_traverse_tree_sitter()
         self._tree_sitter.reset()
         sequence_split = self.get_sequence_split(self._root, max_subtree_size)
@@ -50,7 +49,7 @@ class MyCodeTree:
             [node.get_num_tokens() for node in sequence_split], max_subtree_size
         )
 
-    def _init_traverse_tree_sitter(self):
+    def _init_traverse_tree_sitter(self) -> MyNode:
         start_pos, end_pos = self._tree_sitter.get_start_end_bytes()
         node = MyNode(start_pos, end_pos)
         is_leaf = not self._tree_sitter.goto_first_child()
@@ -67,8 +66,8 @@ class MyCodeTree:
             self._tree_sitter.goto_parent()
         return node
 
-    def get_sequence_split(self, start_node, max_subtree_size):
-        subtree_split = list()
+    def get_sequence_split(self, start_node: MyNode, max_subtree_size: int) -> list[int]:
+        subtree_split: list[int] = list()
         if start_node.get_num_tokens() < max_subtree_size:
             subtree_split.append(start_node)
         else:

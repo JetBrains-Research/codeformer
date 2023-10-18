@@ -7,21 +7,19 @@ from omegaconf import DictConfig
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 
-from jetnn.data_processing.vocabularies.plain.plain_code_vocabulary import (
-    PlainCodeVocabulary,
+from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
+from jetnn.data_processing.vocabularies.hf_tokenizer.hf_tokenizer_vocabulary import (
     from_holdout,
 )
-from jetnn.data_processing.tasks.language_modeling import (
-    TextTokens,
-    BatchedTextTokens,
+from jetnn.data_processing.base_data_classes import (
+    SampleData,
+    BatchedData
 )
-from jetnn.data_processing.tasks.datasets.language_modeling_dataset import (
-    LanguageModelingDataset
+from jetnn.data_processing.tasks.task_specific_datasets import (
+    LanguageModelingDataset,
+    CodeModelingDataset,
+    MethodNamingDataset
 )
-from jetnn.data_processing.tasks.datasets.code_modeling_dataset import (
-    CodeModelingDataset
-)
-
 
 class DataModule(LightningDataModule):
     _train = "train"
@@ -37,13 +35,13 @@ class DataModule(LightningDataModule):
         self._vocabulary = self.setup_vocabulary()
 
     @property
-    def vocabulary(self) -> PlainCodeVocabulary:
+    def vocabulary(self) -> Vocabulary:
         if self._vocabulary is None:
             raise RuntimeError(f"Setup data module for initializing vocabulary")
         return self._vocabulary
 
-    def setup_vocabulary(self) -> PlainCodeVocabulary:
-        vocabulary_path = self._config.data.path
+    def setup_vocabulary(self) -> Vocabulary:
+        vocabulary_path = self._config.data.vocab_path
         if not exists(vocabulary_path):
             print("Can't find vocabulary, collect it from train holdout")
             vocab = from_holdout(join(self._data_dir, "train.jsonl"), self._config.data)
@@ -56,9 +54,9 @@ class DataModule(LightningDataModule):
 
     @staticmethod
     def collate_wrapper(
-        batch: List[Optional[TextTokens]],
-    ) -> BatchedTextTokens:
-        return BatchedTextTokens(batch)
+        batch: List[Optional[SampleData]],
+    ) -> BatchedData:
+        return BatchedData(batch)
 
     def _create_dataset(self, holdout_file: str):
         if self._vocabulary is None:
@@ -67,8 +65,8 @@ class DataModule(LightningDataModule):
             return LanguageModelingDataset(holdout_file, self._config, self._vocabulary)
         elif self._task == "code_modeling":
             return CodeModelingDataset(holdout_file, self._config, self._vocabulary)
-        elif self._task == "method_naming_prediction":
-            return None
+        elif self._task == "method_naming":
+            return MethodNamingDataset(holdout_file, self._config, self._vocabulary)
         else:
             raise RuntimeError("Unknown task")
 
@@ -96,9 +94,9 @@ class DataModule(LightningDataModule):
 
     def transfer_batch_to_device(
         self,
-        batch: BatchedTextTokens,
+        batch: BatchedData,
         device: torch.device,
         dataloader_idx: int,
-    ) -> BatchedTextTokens:
+    ) -> BatchedData:
         batch.move_to_device(device)
         return batch

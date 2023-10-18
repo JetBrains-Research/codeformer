@@ -3,15 +3,15 @@ from torch import nn, Tensor
 from torch.nn import Linear
 from torch.nn.modules.transformer import TransformerEncoder, TransformerEncoderLayer
 
-from jetnn.data_processing.plain_code_method.labeled_plain_code import (
-    BatchedLabeledCodeTokens,
+from jetnn.data_processing.base_data_classes import (
+    BatchedData,
 )
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
 from jetnn.models.util_layers.positional_encoding import PositionalEncodingWithEmbedding
 from jetnn.models.util_layers.embedding import TokenEmbedding
 
 
-class TransformerEncoder(nn.Module):
+class MyTransformerEncoder(nn.Module):
     def __init__(self, config: DictConfig, vocab: Vocabulary):
         super().__init__()
         self._vocab_size = len(vocab)
@@ -31,8 +31,8 @@ class TransformerEncoder(nn.Module):
         self._encoder = TransformerEncoder(encoder_layer, config.num_layers)
         self._linear = Linear(config.d_model, len(vocab))
 
-    def forward(self, batch: BatchedLabeledCodeTokens) -> Tensor:
-        src_sequence = batch.code_tokens.permute(1, 0)
+    def forward(self, batch: BatchedData) -> Tensor:
+        src_sequence = batch.text_tokens.permute(1, 0)
         src_key_padding_mask = src_sequence == self._pad_token
         return self._encoder(
             self._positional_encoding(self._embedding(src_sequence)),

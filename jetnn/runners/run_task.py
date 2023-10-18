@@ -6,8 +6,8 @@ from commode_utils.callbacks import (
     PrintEpochResultCallback,
 )
 from omegaconf import DictConfig, OmegaConf
-from jetnn.data_processing.vocabularies.plain.plain_code_vocabulary import (
-    PlainCodeVocabulary,
+from jetnn.data_processing.vocabularies.vocabulary import (
+    Vocabulary,
 )
 from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.callbacks import (
@@ -26,12 +26,12 @@ def data_module_by_config(config: DictConfig, task: str) -> DataModule:
     return DataModule(task, config)
 
 
-def model_by_task(task: str, config: DictConfig, vocab: PlainCodeVocabulary):
+def model_by_task(task: str, config: DictConfig, vocab: Vocabulary):
     if task == "language_modeling":
         model_class = LanguageModelingModel
     elif task == "code_modeling":
         model_class = LanguageModelingModel
-    elif task == "method_naming_prediction":
+    elif task == "method_naming":
         model_class = MethodNamingModel
     else:
         raise RuntimeError("Wrong task name")
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     torch.set_float32_matmul_precision("medium")
     arg_parser = ArgumentParser()
     arg_parser.add_argument(
-        "-task", help="Task name", choices=["language_modeling", "code_modeling", "method_name_prediction"]
+        "-task", help="Task name", choices=["language_modeling", "code_modeling", "method_naming"]
     )
     arg_parser.add_argument(
         "-mode", help="Mode to run script", choices=["train", "test"]

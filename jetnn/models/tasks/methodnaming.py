@@ -12,10 +12,10 @@ from torchmetrics import MetricCollection, Metric
 
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
 from jetnn.metrics.chrf import ChrF
-from jetnn.models.decoders.transformer_decoder import MethodNameTransformerDecoder
-from jetnn.models.decoders.big_bird_decoder import MethodNameBigBirdDecoder
+from jetnn.models.decoders.transformer_decoder import MyTransformerDecoder
+from jetnn.models.decoders.big_bird_decoder import BigBirdDecoder
 from jetnn.models.encoders.transformer_encoder import (
-    TransformerEncoder,
+    MyTransformerEncoder,
 )
 from jetnn.models.encoders.codeformer_encoder import (
     CodeformerEncoder,
@@ -53,7 +53,7 @@ class MethodNamingModel(LightningModule):
 
     def _get_encoder(self) -> nn.Module:
         if self._config.model.encoder == "Transformer":
-            return TransformerEncoder(
+            return MyTransformerEncoder(
                 self._config.model.Transformer, self._vocab
             )
         if self._config.model.encoder == "Codeformer":
@@ -73,11 +73,11 @@ class MethodNamingModel(LightningModule):
 
     def _get_decoder(self) -> nn.Module:
         if self._config.model.decoder == "Transformer":
-            return MethodNameTransformerDecoder(
+            return MyTransformerDecoder(
                 self._config.model.Transformer, self._vocab
             )
         elif self._config.model.decoder == "BigBird":
-            return MethodNameBigBirdDecoder(self._config.model.BigBird, self._vocab)
+            return BigBirdDecoder(self._config.model.BigBird, self._vocab)
         else:
             raise ValueError("Unknown decoder type")
 

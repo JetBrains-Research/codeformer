@@ -5,7 +5,7 @@ progress_bar_refresh_rate: 1
 
 model:
 
-  LM: "CodeformerLM"
+  LM: CodeformerLM
 
   CodeformerLM:
     token_encoder_config:
@@ -43,13 +43,13 @@ model:
       add_begin_end_tokens_in_splits: True
 
 data:
-  type: "plain_code"
   root: "../../datasets/LM_test"
-  path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   checkpoint_tokenizer: "Salesforce/codet5p-220m"
+  vocab_path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   train_new_tokenizer: False
   max_tokenizer_vocab: 20000
   max_text_tokens: 2048
+  use_ast_splitter: True
   max_chunk_size: 14
   max_chunks_number: 384
   programming_language: 'python'

@@ -1,4 +1,5 @@
 import spacy
+from spacy.language import Language
 from jetnn.data_processing.tree_representation.tree_utils import MyTokens, MyNode, split_big_leaves, merge_left
 import random
 
@@ -6,14 +7,14 @@ import random
 class MyTextTree:
 
     def __init__(self):
-        self._nlp = spacy.load("en_core_web_sm")
+        self._nlp: Language = spacy.load("en_core_web_sm")
         self._tree_doc = None
         self._tokens = None
         self._spacy_roots = None
         self._root = None
         random.seed(10)
 
-    def _find_root_nodes(self):
+    def _find_root_nodes(self) -> list:
         root_nodes = list()
         for token in self._tree_doc:
             if token.dep_ == 'ROOT':
@@ -21,16 +22,21 @@ class MyTextTree:
         return root_nodes
 
     @staticmethod
-    def _post_process_sequence_split(sequence_split, max_subtree_size):
+    def _post_process_sequence_split(sequence_split: list[int], max_subtree_size: int) -> list[int]:
         sequence_split = list(filter(lambda x: x != 0, sequence_split))
         sequence_split = split_big_leaves(sequence_split, max_subtree_size)
         sequence_split = merge_left(sequence_split, max_subtree_size)
         return sequence_split
 
-    def process_text(self, text, tokens, max_subtree_size=16, tokens_process_function=lambda x: x):
+    def process_text(
+            self, 
+            text: str, 
+            tokens: list[str], 
+            max_subtree_size: int=16
+    ) -> list[int]:
         self._tree_doc = self._nlp(text)
         self._spacy_roots = self._find_root_nodes()
-        self._tokens = MyTokens(text, tokens, tokens_process_function)
+        self._tokens = MyTokens(text, tokens)
 
         self._root = MyNode(0, len(text))
         for spacy_root in self._spacy_roots:
@@ -69,7 +75,7 @@ class MyTextTree:
 
         return node
 
-    def _get_sequence_split(self, start_node, max_subtree_size):
+    def _get_sequence_split(self, start_node: MyNode, max_subtree_size: int):
         subtree_split = list()
         if start_node.get_num_tokens() < max_subtree_size:
             subtree_split.append(start_node.get_num_tokens())
