@@ -25,7 +25,7 @@ class T5Encoder(nn.Module):
         self._encoder = T5EncoderModel(t5_config)
 
     def forward(self, batch: BatchedData) -> Tensor:
-        src_sequence = batch.text_tokens.permute(1, 0)
+        src_sequence = batch.text_tokens
         src_key_padding_mask = src_sequence == self._pad_token
         src_key_padding_mask = src_key_padding_mask.long()
         return self._encoder(

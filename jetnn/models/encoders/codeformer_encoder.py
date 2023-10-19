@@ -10,18 +10,24 @@ from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
 from jetnn.models.util_layers.positional_encoding import PositionalEncodingWithEmbedding
 from jetnn.models.util_layers.embedding import TokenEmbedding
 
+from jetnn.models.utils.codeformer_utils import (
+    generate_batches_from_splits,
+    pad_to_match_linear_layer
+)
 
 class CodeformerEncoder(nn.Module):
     def __init__(
         self,
         config: DictConfig,
         vocab: Vocabulary,
-        max_subsequence_size: int,
+        max_chunk_size: int,
     ):
         super().__init__()
         self._vocab_size = len(vocab)
-        self._pad_token = vocab.pad_id()
-        self._max_subsequence_size = max_subsequence_size + 2
+        self._pad_id = vocab.pad_id()
+        self._bos_id = vocab.bos_id()
+        self._eos_id = vocab.eos_id()
+        self._context_size = max_chunk_size + 2
         self._embedding = TokenEmbedding(self._vocab_size, config.d_model)
         self._positional_encoding = PositionalEncodingWithEmbedding(
             config.d_model, config.dropout
@@ -35,27 +41,27 @@ class CodeformerEncoder(nn.Module):
             batch_first=True,
         )
         self._encoder_1 = TransformerEncoder(encoder_layer, config.num_layers)
-        self._linear_1 = Linear(self._max_subsequence_size, 1)
+        self._linear_1 = Linear(self._context_size, 1)
         self._encoder_2 = TransformerEncoder(encoder_layer, config.num_layers)
 
-    def _pad_to_match_linear_layer(self, x, batch_split):
-        max_splits = torch.max(batch_split)
-        num_batches = len(batch_split)
-        result = torch.zeros(
-            (num_batches, max_splits, self._max_subsequence_size, x.shape[2])
-        ).to(self._device)
-        p_sum = 0
-        for i, split in enumerate(batch_split):
-            result[i][:split, : x.shape[1]] = x[p_sum : p_sum + split]
-            p_sum += split
-        return result
-
     def forward(self, batch: BatchedData) -> Tensor:
-        src_sequence = batch.text_tokens
-        src_key_padding_mask = src_sequence == self._pad_token
-        x = self._positional_encoding(self._embedding(src_sequence))
-        x = self._encoder_1(x, src_key_padding_mask=src_key_padding_mask)
-        x = self._pad_to_match_linear_layer(x, batch.batch_split)
+        splits = generate_batches_from_splits(
+            input_ids=batch.text_tokens, 
+            splits_size=batch.batch_split, 
+            context_size=self._context_size,
+            pad_id=self._pad_id, 
+            bos_id=self._bos_id, 
+            eos_id=self._eos_id,
+            device=self._device,
+        )
+        attention_mask = (splits == self._pad_id)
+        x = self._positional_encoding(self._embedding(splits))
+        x = self._encoder_1(x, src_key_padding_mask=attention_mask)
+        x = pad_to_match_linear_layer(
+            x=x,
+            split_sizes=batch.batch_split,
+            context_size=self._context_size
+        )
         x = x.permute(0, 1, 3, 2)
         x = self._linear_1(x).squeeze(dim=3)
         x = self._encoder_2(x)

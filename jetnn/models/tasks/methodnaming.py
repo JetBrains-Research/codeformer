@@ -26,7 +26,7 @@ from jetnn.models.encoders.big_bird_encoder import (
 from jetnn.models.encoders.t5_encoder import (
     T5Encoder,
 )
-from jetnn.models.utils import configure_optimizers_alon
+from jetnn.models.utils.utils import configure_optimizers_alon
 
 
 class MethodNamingModel(LightningModule):
@@ -60,7 +60,7 @@ class MethodNamingModel(LightningModule):
             return CodeformerEncoder(
                 self._config.model.Codeformer,
                 self._vocab,
-                self._config.data.max_subsequence_size,
+                self._config.data.max_chunk_size,
             )
         elif self._config.model.encoder == "BigBird":
             return BigBirdEncoder(self._config.model.BigBird, self._vocab)

@@ -37,11 +37,7 @@ class BatchedData():
         self.batch_split = self.batch_split.to(device)
 
     def _accumulate_text_tokens(self, samples: List[SampleData]) -> None:
-        return (
-            torch.cat([sample.text_tokens for sample in samples])
-            if self._len > 0
-            else torch.tensor([])
-        )
+        return torch.stack([sample.text_tokens for sample in samples]) if self._len > 0 else torch.tensor([])
 
     def _accumulate_label_tokens(self, samples: List[SampleData]) -> None:
         labels = [sample.label_tokens for sample in samples if sample.label_tokens is not None]
@@ -51,8 +47,4 @@ class BatchedData():
 
     def _accumulate_batch_splits(self, samples: List[SampleData]) -> None:
         splits = [sample.split for sample in samples if sample.split is not None]
-        return (
-            torch.cat([batch_split for batch_split in splits])
-            if len(splits) > 0
-            else torch.tensor([])
-        )
+        return torch.stack([batch_split for batch_split in splits]) if len(splits) > 0 else torch.tensor([])

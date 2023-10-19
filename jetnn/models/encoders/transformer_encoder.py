@@ -32,7 +32,7 @@ class MyTransformerEncoder(nn.Module):
         self._linear = Linear(config.d_model, len(vocab))
 
     def forward(self, batch: BatchedData) -> Tensor:
-        src_sequence = batch.text_tokens.permute(1, 0)
+        src_sequence = batch.text_tokens
         src_key_padding_mask = src_sequence == self._pad_token
         return self._encoder(
             self._positional_encoding(self._embedding(src_sequence)),

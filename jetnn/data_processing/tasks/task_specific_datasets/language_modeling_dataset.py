@@ -42,19 +42,19 @@ class LanguageModelingDataset(Dataset):
         try:
             raw_sample = get_line_by_offset(self._data_file, self._line_offsets[index])
             sample = json.loads(raw_sample)
-            tokenized_text = self.tokenize(sample['text'], self._config.max_text_tokens)
-            tokenized_text = list(filter(lambda x: x != self._vocab.pad_id(), tokenized_text))[1:-1]
-            tokens_split = []
+            tokenized_text = torch.tensor(self.tokenize(sample['text'], self._config.max_text_tokens))
+            tokens_split = torch.tensor([])
             if self._config.use_ast_splitter:
-                tokens = list(map(self._vocab.tokenizer.decode, tokenized_text))
+                tmp_tokenized_text = list(filter(lambda x: x != self._vocab.pad_id(), tokenized_text))[1:-1]
+                tokens = list(map(self._vocab.tokenizer.decode, tmp_tokenized_text))
                 tokens_split = self._text_tree.process_text(
                     sample['text'], tokens, self._config.max_chunk_size
                 )
                 num_splits = min(self._config.max_chunks_number, len(tokens_split))
-                tokens_split = tokens_split[:num_splits]
-            return SampleData(text_tokens=torch.tensor(tokenized_text), 
+                tokens_split[:num_splits] = tokens_split[:num_splits]
+            return SampleData(text_tokens=tokenized_text,
                               label_tokens=None,
-                              split=torch.tensor(tokens_split))
+                              split=tokens_split)
         except ValueError as e:
             with open(self._log_file, "a") as f_out:
                 f_out.write(f"Error parsing sample from line #{index}: {e}\n")

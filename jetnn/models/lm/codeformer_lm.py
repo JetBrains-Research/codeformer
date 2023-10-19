@@ -7,6 +7,9 @@ from transformers import GPT2Config, GPT2Model, GPT2LMHeadModel
 from jetnn.data_processing.base_data_classes import (
     BatchedData
 )
+from jetnn.models.utils.codeformer_utils import (
+    generate_batches_from_splits
+)
 
 class CodeformerLM(nn.Module):
     def __init__(self, codeformer_config: DictConfig, vocab):
@@ -38,28 +41,6 @@ class CodeformerLM(nn.Module):
         self._split_encoder = GPT2Model(split_encoder_config)
         self._decoder = GPT2LMHeadModel(decoder_config)
         self._split_accumulator_linear = nn.Linear(self._token_encoder_context_size, 1)
-
-    def _generate_samples_from_splits(self, input_ids: torch.Tensor, splits_size: torch.Tensor):
-        splits_length = (splits_size != self._special_tokens.pad_id).count_nonzero(dim=1)
-        num_splits = torch.sum(splits_length).item()
-        result = torch.zeros((num_splits, self._token_encoder_context_size), dtype=torch.long).to(self._device)
-        result_idx = 0
-        for batch_idx in range(len(splits_size)):
-            p_sum = 0
-            current_split = splits_size[batch_idx]
-            for split_idx in range(splits_length[batch_idx].item()):
-                current_split_size = current_split[split_idx]
-                start_pos = 0
-                if self._splits.add_begin_end_tokens_in_splits:
-                    result[result_idx][0] = self._special_tokens.bos_id
-                    result[result_idx][current_split_size + 1] = self._special_tokens.eos_id
-                    start_pos = 1
-                result[result_idx][start_pos : start_pos + current_split_size] = input_ids[batch_idx][
-                    p_sum : p_sum + current_split_size
-                ]
-                p_sum += current_split_size
-                result_idx += 1
-        return result
     
     # TODO: think about how we handle zeroes in linear layer 
     # (in case not all the splits are not the same size what is nearly always true)

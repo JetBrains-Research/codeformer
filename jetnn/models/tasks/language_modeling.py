@@ -15,7 +15,7 @@ from jetnn.metrics.chrf import ChrF
 from jetnn.models.lm.codeformer_lm import (
     CodeformerLM,
 )
-from jetnn.models.utils import configure_optimizers_alon
+from jetnn.models.utils.utils import configure_optimizers_alon
 
 
 class LanguageModelingModel(LightningModule):

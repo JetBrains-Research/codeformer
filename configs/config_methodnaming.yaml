@@ -44,8 +44,8 @@ data:
   vocab_path: '../../pretrained/plain_code_accumulate_spaces.vocab'
   train_new_tokenizer: False
   max_tokenizer_vocab: 20000
-  max_code_parts: 2048
-  max_label_parts: 7
+  max_code_tokens: 2048
+  max_label_tokens: 7
   use_ast_splitter: True
   max_chunk_size: 14
   max_chunks_number: 384
@@ -80,7 +80,7 @@ optimizer:
 train:
 
   dataloader:
-    batch_size: 16
+    batch_size: 4
     shuffle: True
     num_workers: 4
     prefetch_factor: 2
@@ -90,7 +90,7 @@ train:
 val:
 
   dataloader:
-    batch_size: 16
+    batch_size: 4
     num_workers: 4
     pin_memory: True
     persistent_workers: True
@@ -102,7 +102,7 @@ val:
 test:
 
   dataloader:
-    batch_size: 16
+    batch_size: 4
     num_workers: 4
     pin_memory: True
     persistent_workers: True
