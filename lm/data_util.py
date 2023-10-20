@@ -1,12 +1,54 @@
 from typing import List, Optional
 
+from datasets import load_dataset
 from pytorch_lightning import LightningDataModule
 from tokenizers import Tokenizer
 import torch
 from torch.utils.data import DataLoader
+from torch.utils.data import IterableDataset
 
 from jetnn.data_processing.tasks.language_modeling import BatchedTextTokens, TextTokens
-from jetnn.data_processing.tasks.task_specific_datasets.language_modeling_dataset import ThePileDataset
+from jetnn.data_processing.tree_representation.my_text_tree import MyTextTree
+
+
+class ThePileDataset(IterableDataset):
+    def __init__(
+            self,
+            split: str,
+            tokenizer: Tokenizer,
+            max_text_tokens: int,
+            max_chunks_number: int,
+            max_chunk_size: int
+    ):
+        super(ThePileDataset).__init__()
+        self.ds = load_dataset('monology/pile-uncopyrighted', streaming=True, split=split)
+        self.max_text_tokens = max_text_tokens
+        self.max_chunks_number = max_chunks_number
+        self.max_chunk_size = max_chunk_size
+        self.tokenizer = tokenizer
+        self._text_tree = MyTextTree()
+
+    def __iter__(self):
+        for sample in self.ds:
+            text = sample['text']
+            tokenized_text = self.tokenizer.encode(
+                text,
+                return_tensors='pt',
+                add_special_tokens=False,
+                padding="max_length",
+                max_length=self.max_text_tokens,
+                truncation="longest_first",
+            )
+
+            # tokenized_text = self.tokenize(sample['text'], self._config.max_text_tokens)
+            # tokenized_text = list(filter(lambda x: x != self._vocab.pad_id(), tokenized_text))[1:-1]
+            tokens = [self.tokenizer.decode(token) for token in tokenized_text]
+            tokens_split = self._text_tree.process_text(
+                text, tokens, self.max_chunk_size
+            )
+            num_splits = min(self.max_chunks_number, len(tokens_split))
+            tokens_split = tokens_split[:num_splits]
+            yield TextTokens(torch.tensor(tokenized_text), torch.tensor(tokens_split))
 
 
 class ThePileDataModule(LightningDataModule):
