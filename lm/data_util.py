@@ -61,6 +61,12 @@ class TextTokens:
 
 
 class BatchedTextTokens:
+    batch: Tensor
+    max_tokens_per_split: int
+    max_splits: int
+    token_ids_list: list[list[int]]
+    split_sizes_list: list[list[int]]
+
     def __init__(self,
                  samples: List[TextTokens],
                  pad_idx: int,
@@ -70,7 +76,7 @@ class BatchedTextTokens:
         self.max_tokens_per_split = max(s.max_tokens_per_split for s in samples) + 2
         self.max_splits = max(s.num_splits for s in samples)
         batch_size = len(samples)
-        self.tokens_ids_list = [s.token_ids for s in samples]
+        self.token_ids_list = [s.token_ids for s in samples]
         self.split_sizes_list = [s.split_sizes for s in samples]
         # + 2 because of bos and eos tokens
         self.batch = pad_idx * torch.ones(batch_size, self.max_splits, self.max_tokens_per_split + 2, dtype=torch.long)
@@ -83,7 +89,7 @@ class BatchedTextTokens:
                 cursor += split_size
 
     def __len__(self) -> int:
-        return len(self.tokens_ids_list)
+        return len(self.token_ids_list)
 
     def pin_memory(self) -> "BatchedTextTokens":
         self.batch.pin_memory()
