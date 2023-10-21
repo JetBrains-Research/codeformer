@@ -1,9 +1,11 @@
 from typing import List, Optional
+from dataclasses import dataclass
 
 from datasets import load_dataset
 from pytorch_lightning import LightningDataModule
 from tokenizers import Tokenizer
 import torch
+from torch import Tensor
 from torch.utils.data import DataLoader
 from torch.utils.data import IterableDataset
 
