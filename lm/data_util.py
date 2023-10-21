@@ -110,11 +110,11 @@ class ThePileDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.prefetch_factor = prefetch_factor
 
-    @staticmethod
-    def collate_wrapper(
-            batch: List[Optional[TextTokens]],
-    ) -> BatchedTextTokens:
-        return BatchedTextTokens(batch)
+    def collate_wrapper(self, batch: List[Optional[TextTokens]]) -> BatchedTextTokens:
+        return BatchedTextTokens(batch,
+                                 self.tokenizer.pad_token_id,
+                                 self.tokenizer.bos_token_id,
+                                 self.tokenizer.eos_token_id)
 
     def _create_dataset(self, split: str):
         return ThePileDataset(split,
