@@ -7,7 +7,6 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.data import IterableDataset
 
-from jetnn.data_processing.tasks.language_modeling import BatchedTextTokens, TextTokens
 from jetnn.data_processing.tree_representation.my_text_tree import MyTextTree
 
 
@@ -33,11 +32,9 @@ class ThePileDataset(IterableDataset):
             text = sample['text']
             tokenized_text = self.tokenizer.encode(
                 text,
-                return_tensors='pt',
                 add_special_tokens=False,
-                padding="max_length",
                 max_length=self.max_text_tokens,
-                truncation="longest_first",
+                truncation="longest_first"
             )
 
             # tokenized_text = self.tokenize(sample['text'], self._config.max_text_tokens)
@@ -49,6 +46,9 @@ class ThePileDataset(IterableDataset):
             num_splits = min(self.max_chunks_number, len(tokens_split))
             tokens_split = tokens_split[:num_splits]
             yield TextTokens(torch.tensor(tokenized_text), torch.tensor(tokens_split))
+            tokens_splits = tokens_splits[:self.max_chunks_number]
+            yield TextTokens(tokenized_text, tokens_splits)
+
 
 
 class ThePileDataModule(LightningDataModule):
