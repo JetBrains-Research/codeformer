@@ -44,6 +44,53 @@ class ThePileDataset(IterableDataset):
             yield TextTokens(tokenized_text, tokens_splits)
 
 
+@dataclass
+class TextTokens:
+    token_ids: Tensor # can be code, not just text
+    split_sizes: Tensor
+
+    @property
+    def num_splits(self) -> int:
+        return len(self.split_sizes)
+
+    @property
+    def max_tokens_per_split(self) -> int:
+        return max(self.split_sizes)
+
+
+class BatchedTextTokens:
+    def __init__(self,
+                 samples: List[TextTokens],
+                 pad_idx: int,
+                 bos_token_id: int,
+                 eos_token_id: int) -> None:
+        # + 2 because of bos and eos tokens
+        self.max_tokens_per_split = max(s.max_tokens_per_split for s in samples) + 2
+        self.max_splits = max(s.num_splits for s in samples)
+        batch_size = len(samples)
+        self.tokens_ids_list = [s.token_ids for s in samples]
+        self.split_sizes_list = [s.split_sizes for s in samples]
+        # + 2 because of bos and eos tokens
+        self.batch = pad_idx * torch.ones(batch_size, self.max_splits, self.max_tokens_per_split + 2, dtype=torch.long)
+        for sample_num, sample in enumerate(samples):
+            cursor = 0
+            for split_num, split_size in enumerate(sample.split_sizes):
+                tokens = [bos_token_id] + sample.token_ids[cursor: cursor + split_size] + [eos_token_id]
+                # + 2 because of bos and eos tokens
+                self.batch[sample_num, split_num, :split_size + 2] = torch.tensor(tokens, dtype=torch.long)
+                cursor += split_size
+
+    def __len__(self) -> int:
+        return len(self.tokens_ids_list)
+
+    def pin_memory(self) -> "BatchedTextTokens":
+        self.batch.pin_memory()
+        return self
+
+    def to(self, device: torch.DeviceObjType) -> "BatchedTextTokens":
+        self.batch = self.batch.to(device)
+        return self
+
 
 class ThePileDataModule(LightningDataModule):
     def __init__(self,
