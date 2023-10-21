@@ -36,16 +36,10 @@ class ThePileDataset(IterableDataset):
                 max_length=self.max_text_tokens,
                 truncation="longest_first"
             )
-
-            # tokenized_text = self.tokenize(sample['text'], self._config.max_text_tokens)
-            # tokenized_text = list(filter(lambda x: x != self._vocab.pad_id(), tokenized_text))[1:-1]
-            tokens = [self.tokenizer.decode(token) for token in tokenized_text]
-            tokens_split = self._text_tree.process_text(
+            tokens = [self.tokenizer.convert_ids_to_tokens([token])[0] for token in tokenized_text]
+            tokens_splits = self._text_tree.process_text(
                 text, tokens, self.max_chunk_size
             )
-            num_splits = min(self.max_chunks_number, len(tokens_split))
-            tokens_split = tokens_split[:num_splits]
-            yield TextTokens(torch.tensor(tokenized_text), torch.tensor(tokens_split))
             tokens_splits = tokens_splits[:self.max_chunks_number]
             yield TextTokens(tokenized_text, tokens_splits)
 
