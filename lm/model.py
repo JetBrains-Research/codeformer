@@ -2,7 +2,7 @@ import torch
 from torch import nn, Tensor
 from transformers import DebertaV2Model, DebertaV2Tokenizer
 
-from lm.data_util import BatchedTextTokens
+from lm.data_utils import BatchedTextTokens
 from lm.deberta_patch import patch_deberta_causal
 
 

@@ -3,7 +3,7 @@ from transformers import AutoTokenizer
 from tqdm import tqdm
 
 from lm.model import CodeformerLM
-from lm.data_util import ThePileDataModule
+from lm.data_utils import ThePileDataModule
 
 
 def main():
