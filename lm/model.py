@@ -30,7 +30,7 @@ class CodeformerLM(nn.Module):
 
         # Chunk embeddings
         token_ids_stacked = token_ids.reshape(batch_size * max_chunks, max_tokens_per_chunk)
-        token_att_mask = token_ids_stacked != self.tokenizer.pad_token_id
+        token_att_mask = token_ids_stacked != self.pad_token_id
         token_units = self.encoder_token(input_ids=token_ids_stacked, attention_mask=token_att_mask).last_hidden_state
         hidden_size = token_units.shape[2]
         chunk_embs = token_units.reshape(batch_size, max_chunks, max_tokens_per_chunk, hidden_size)[:, :, 0, :]
