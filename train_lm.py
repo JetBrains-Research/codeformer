@@ -8,11 +8,11 @@ from lm.data_utils import ThePileDataModule
 
 def main():
     batch_size = 2
-    model_name = 'microsoft/deberta-v3-base'
+    model_name = 'microsoft/deberta-v3-small'
 
-    max_text_tokens = 2048
+    max_text_tokens = 512
     max_chunk_size = 14
-    max_chunks_number = 384
+    max_chunks_number = 32
     weight_decay = 0.0
 
     # TODO: write parameters gathering for weight_decay
