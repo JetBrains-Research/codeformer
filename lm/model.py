@@ -93,7 +93,7 @@ class CodeformerLM(nn.Module):
         loss_tens = torch.nn.functional.cross_entropy(logits, targets, reduction='none', ignore_index=self.pad_token_id)
         return loss_tens
 
-    def _get_model(self, hf_model_name: str) -> dict[str: nn.Module | nn.Parameter | Tensor]:
+    def _get_modules(self, hf_model_name: str) -> dict[str: nn.Module | nn.Parameter | Tensor]:
         deberta_v2_prefix = 'microsoft/deberta-v2'
         deberta_v3_prefix = 'microsoft/deberta-v3'
         if hf_model_name[:len(deberta_v3_prefix)] in {deberta_v2_prefix, deberta_v3_prefix}:
