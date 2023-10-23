@@ -21,7 +21,7 @@ class CodeformerLM(nn.Module):
 
     def forward(self, batch: BatchedTextTokens) -> Tensor:
         # token_ids.shape = batch_size, max_chunks, max_tokens_per_chunk
-        token_ids = batch.batch
+        token_ids = batch.token_ids
         chunk_att_mask = torch.any(token_ids != self.pad_token_id, 2)
         batch_size, max_chunks, max_tokens_per_chunk = token_ids.shape
 

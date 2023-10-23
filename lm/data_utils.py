@@ -70,7 +70,7 @@ class TextTokens:
 
 
 class BatchedTextTokens:
-    batch: Tensor
+    token_ids: Tensor
     max_tokens_per_split: int
     max_splits: int
     token_ids_list: list[list[int]]
@@ -88,24 +88,24 @@ class BatchedTextTokens:
         self.token_ids_list = [s.token_ids for s in samples]
         self.split_sizes_list = [s.split_sizes for s in samples]
         # + 2 because of bos and eos tokens
-        self.batch = pad_idx * torch.ones(batch_size, self.max_splits, self.max_tokens_per_split + 2, dtype=torch.long)
+        self.token_ids = pad_idx * torch.ones(batch_size, self.max_splits, self.max_tokens_per_split + 2, dtype=torch.long)
         for sample_num, sample in enumerate(samples):
             cursor = 0
             for split_num, split_size in enumerate(sample.split_sizes):
                 tokens = [bos_token_id] + sample.token_ids[cursor: cursor + split_size] + [eos_token_id]
                 # + 2 because of bos and eos tokens
-                self.batch[sample_num, split_num, :split_size + 2] = torch.tensor(tokens, dtype=torch.long)
+                self.token_ids[sample_num, split_num, :split_size + 2] = torch.tensor(tokens, dtype=torch.long)
                 cursor += split_size
 
     def __len__(self) -> int:
         return len(self.token_ids_list)
 
     def pin_memory(self) -> "BatchedTextTokens":
-        self.batch.pin_memory()
+        self.token_ids.pin_memory()
         return self
 
     def to(self, device: torch.DeviceObjType) -> "BatchedTextTokens":
-        self.batch = self.batch.to(device)
+        self.token_ids = self.token_ids.to(device)
         return self
 
 
