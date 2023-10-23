@@ -19,7 +19,9 @@ class ThePileDataset(IterableDataset):
             tokenizer: Tokenizer,
             max_text_tokens: int,
             max_chunks_number: int,
-            max_chunk_size: int
+            max_chunk_size: int,
+            min_chunks: int,
+            min_tokens: int
     ):
         super(ThePileDataset).__init__()
         self.ds = load_dataset('monology/pile-uncopyrighted', streaming=True, split=split)
@@ -28,6 +30,8 @@ class ThePileDataset(IterableDataset):
         self.max_chunk_size = max_chunk_size
         self.tokenizer = tokenizer
         self._text_tree = MyTextTree()
+        self.min_chunks = min_chunks
+        self.min_tokens = min_tokens
 
     def __iter__(self):
         for sample in self.ds:
@@ -39,10 +43,15 @@ class ThePileDataset(IterableDataset):
                 truncation="longest_first"
             )
             tokens = [self.tokenizer.convert_ids_to_tokens([token])[0] for token in tokenized_text]
+            if len(tokens) < self.min_tokens:
+                continue
+            truncated_text = self.tokenizer.decode(tokenized_text)
             tokens_splits = self._text_tree.process_text(
-                text, tokens, self.max_chunk_size
+                truncated_text, tokens, self.max_chunk_size
             )
             tokens_splits = tokens_splits[:self.max_chunks_number]
+            if len(tokens_splits) < self.min_chunks:
+                continue
             yield TextTokens(tokenized_text, tokens_splits)
 
 
@@ -107,6 +116,8 @@ class ThePileDataModule(LightningDataModule):
                  max_text_tokens: int,
                  max_chunks_number: int,
                  max_chunk_size: int,
+                 min_tokens: int,
+                 min_chunks: int,
                  num_workers: int = 16,
                  prefetch_factor: int = 8) -> None:
         super().__init__()
@@ -115,6 +126,8 @@ class ThePileDataModule(LightningDataModule):
         self.max_text_tokens = max_text_tokens
         self.max_chunks_number = max_chunks_number
         self.max_chunk_size = max_chunk_size
+        self.min_tokens = min_tokens
+        self.min_chunks = min_chunks
         self.num_workers = num_workers
         self.prefetch_factor = prefetch_factor
 
@@ -129,7 +142,9 @@ class ThePileDataModule(LightningDataModule):
                               self.tokenizer,
                               self.max_text_tokens,
                               self.max_chunks_number,
-                              self.max_chunk_size)
+                              self.max_chunk_size,
+                              self.min_chunks,
+                              self.min_tokens)
 
     def _shared_dataloader(self, split: str) -> DataLoader:
         ds = self._create_dataset(split)
