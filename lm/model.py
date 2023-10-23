@@ -25,9 +25,6 @@ class CodeformerLM(nn.Module):
         chunk_att_mask = torch.any(token_ids != self.pad_token_id, 2)
         batch_size, max_chunks, max_tokens_per_chunk = token_ids.shape
 
-        # DBG
-        print(f'bs: {batch_size}, mch: {max_chunks}, max_tokens_per_chunk: {max_tokens_per_chunk}')
-
         # Chunk embeddings
         token_ids_stacked = token_ids.reshape(batch_size * max_chunks, max_tokens_per_chunk)
         token_att_mask = token_ids_stacked != self.pad_token_id
