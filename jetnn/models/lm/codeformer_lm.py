@@ -87,7 +87,6 @@ class CodeformerLM(nn.Module):
     def forward(
             self, batch: BatchedData, step: str
     ):
-        
         # splits = self._generate_samples_from_splits(input_ids, split_sizes)
         # attention_mask = (splits == self._special_tokens.pad_id)
         # context_hidden_states = self._token_encoder(

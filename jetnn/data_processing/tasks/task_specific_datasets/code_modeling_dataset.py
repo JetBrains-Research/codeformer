@@ -50,7 +50,6 @@ class CodeModelingDataset(Dataset):
             tokens_split = torch.tensor([])
             if self._config.use_ast_splitter:
                 tmp_tokenized_code = list(filter(lambda x: x != self._vocab.pad_id(), tokenized_code))[1:-1]
-                print("len(tokenized_code)", len(tmp_tokenized_code), end=', ')
                 tokens = list(map(self._vocab.tokenizer.decode, tmp_tokenized_code))
                 tokens_split = self._code_tree.process_code(
                     sample['code'], tokens, self._config.max_chunk_size
@@ -59,7 +58,6 @@ class CodeModelingDataset(Dataset):
                 tmp_tokens_split = self._empty_chunk.copy()
                 tmp_tokens_split[:num_splits] = tokens_split[:num_splits]
                 tokens_split = torch.tensor(tmp_tokens_split, dtype=torch.long)
-                print("sum(tokens_split)", sum(tokens_split))
             return SampleData(text_tokens=tokenized_code,
                               label_tokens=None,
                               split=tokens_split)
