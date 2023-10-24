@@ -38,7 +38,7 @@ class MyCodeTree:
             self,
             java_code: str,
             tokens: list[str],
-            max_subtree_size: int =16,
+            max_subtree_size: int=16,
     ) -> list[int]:
         self._tree_sitter.process_code(java_code)
         self._tokens = MyTokens(java_code, tokens)

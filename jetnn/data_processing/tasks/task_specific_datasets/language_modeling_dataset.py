@@ -33,6 +33,8 @@ class LanguageModelingDataset(Dataset):
 
         self._text_tree = MyTextTree()
 
+        self._empty_chunk = [0 for _ in range(self._config.max_chunks_number)]
+
         open(self._log_file, "w").close()
 
     def __len__(self):
@@ -46,12 +48,16 @@ class LanguageModelingDataset(Dataset):
             tokens_split = torch.tensor([])
             if self._config.use_ast_splitter:
                 tmp_tokenized_text = list(filter(lambda x: x != self._vocab.pad_id(), tokenized_text))[1:-1]
+                print("len(tokenized_code)", len(tmp_tokenized_text), end=', ')
                 tokens = list(map(self._vocab.tokenizer.decode, tmp_tokenized_text))
                 tokens_split = self._text_tree.process_text(
                     sample['text'], tokens, self._config.max_chunk_size
                 )
                 num_splits = min(self._config.max_chunks_number, len(tokens_split))
-                tokens_split[:num_splits] = tokens_split[:num_splits]
+                tmp_tokens_split = self._empty_chunk.copy()
+                tmp_tokens_split[:num_splits] = tokens_split[:num_splits]
+                tokens_split = torch.tensor(tmp_tokens_split, dtype=torch.long)
+                print("sum(tokens_split)", sum(tokens_split))
             return SampleData(text_tokens=tokenized_text,
                               label_tokens=None,
                               split=tokens_split)

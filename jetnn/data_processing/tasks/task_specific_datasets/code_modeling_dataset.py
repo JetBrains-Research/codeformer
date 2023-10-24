@@ -35,6 +35,8 @@ class CodeModelingDataset(Dataset):
             self._config.programming_language, self._config.path_to_tree_sitter
         )
 
+        self._empty_chunk = [0 for _ in range(self._config.max_chunks_number)]
+
         open(self._log_file, "w").close()
 
     def __len__(self):
@@ -44,18 +46,23 @@ class CodeModelingDataset(Dataset):
         try:
             raw_sample = get_line_by_offset(self._data_file, self._line_offsets[index])
             sample = json.loads(raw_sample)
-            cleaned_code, _, _ = self._code_tree.remove_comments(sample["code"])
-            tokenized_code = self.tokenize(cleaned_code, self._config.max_code_parts)[1:-1]
+            tokenized_code = torch.tensor(self.tokenize(sample['code'], self._config.max_code_tokens))
+            tokens_split = torch.tensor([])
             if self._config.use_ast_splitter:
-                tokens = [self._vocab.tokenizer.decode(token) for token in tokenized_code]
+                tmp_tokenized_code = list(filter(lambda x: x != self._vocab.pad_id(), tokenized_code))[1:-1]
+                print("len(tokenized_code)", len(tmp_tokenized_code), end=', ')
+                tokens = list(map(self._vocab.tokenizer.decode, tmp_tokenized_code))
                 tokens_split = self._code_tree.process_code(
-                    cleaned_code, tokens, self._config.max_chunk_size
+                    sample['code'], tokens, self._config.max_chunk_size
                 )
                 num_splits = min(self._config.max_chunks_number, len(tokens_split))
-                tokens_split = tokens_split[:num_splits]
-            return SampleData(text_tokens=torch.tensor(tokenized_code), 
+                tmp_tokens_split = self._empty_chunk.copy()
+                tmp_tokens_split[:num_splits] = tokens_split[:num_splits]
+                tokens_split = torch.tensor(tmp_tokens_split, dtype=torch.long)
+                print("sum(tokens_split)", sum(tokens_split))
+            return SampleData(text_tokens=tokenized_code,
                               label_tokens=None,
-                              split=torch.tensor(tokens_split))
+                              split=tokens_split)
         except ValueError as e:
             with open(self._log_file, "a") as f_out:
                 f_out.write(f"Error parsing sample from line #{index}: {e}\n")
