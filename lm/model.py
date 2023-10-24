@@ -1,5 +1,5 @@
 import torch
-from torch import nn, Tensor
+from torch import nn, Tensor, LongTensor
 from transformers import DebertaV2Model, DebertaV2Tokenizer
 
 from lm.data_utils import BatchedTextTokens
@@ -119,6 +119,14 @@ class CodeformerLM(nn.Module):
             'chunk_sos_embedding': chunk_sos_embedding,
             'pad_token_id': pad_token_id
         }
+
+    def generate(self, input_ids: LongTensor, max_new_tokens: int = 30):
+        batch_size, _ = input_ids.shape
+        assert batch_size == 1
+        num_predicted_tokens = torch.randint(max_new_tokens // 2, max_new_tokens, [1]).item()
+        min_tok_idx = 1000
+        max_tok_idx = self.decoder.embeddings.word_embeddings.weight.shape[0]
+        return torch.cat([input_ids, torch.randint(min_tok_idx, max_tok_idx, [1, num_predicted_tokens])], dim=1)
 
 
 # TODO: attempt to make everything in pure torch without loops
