@@ -48,16 +48,20 @@ def main():
     opt = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     processed_batches = 0
+    losses_micro_batches = []
     for batch in train_iterator:
         batch = batch.to(device)
         loss_tens = model(batch)
         loss = loss_tens.sum() / torch.count_nonzero(loss_tens)
         loss.backward()
-        wandb.log({'loss': loss})
-        train_iterator.set_description(f'Loss: {loss.item():.3f}')
+        losses_micro_batches.append(loss.item())
         if (processed_batches + 1) % accumulation_factor == 0:
+            train_iterator.set_description(f'Loss: {loss.item():.3f}')
             opt.step()
             opt.zero_grad()
+            mini_batch_loss = torch.mean(torch.tensor(losses_micro_batches))
+            losses_micro_batches = []
+            wandb.log({'loss': mini_batch_loss})
         processed_batches += 1
 
 
