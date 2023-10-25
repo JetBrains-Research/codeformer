@@ -302,6 +302,8 @@ class ThePileDataModule(DataModuleBase):
                               self.min_chunks,
                               self.min_tokens)
 
+
+class WikiText2RawDataModule(DataModuleBase):
     def _create_dataset(self, split: str):
         return WikiText2RawDataset(split,
                                    self.tokenizer,
@@ -310,3 +312,14 @@ class ThePileDataModule(DataModuleBase):
                                    self.max_chunk_size,
                                    self.min_chunks,
                                    self.min_tokens)
+
+
+class WikiText2DataModule(DataModuleBase):
+    def _create_dataset(self, split: str):
+        return WikiText2Dataset(split,
+                                self.tokenizer,
+                                self.max_text_tokens,
+                                self.max_chunks_number,
+                                self.max_chunk_size,
+                                self.min_chunks,
+                                self.min_tokens)
