@@ -15,7 +15,7 @@ from lm.utils import setup_wandb
 def evaluate(model: nn.Module,
              dl: DataLoader,
              device: torch.DeviceObjType,
-             split: str) -> dict[Tensor]:
+             split: str) -> dict[str, float]:
     results = []
     for batch in dl:
         batch = batch.to(device)
@@ -33,7 +33,7 @@ def evaluate(model: nn.Module,
     ppl = torch.exp(log_probs_sum / total_num_tokens)
     loss = total_loss / total_samples
     logs = {'ppl': ppl, 'loss': loss}
-    return {f'{split}_{key}': val for key, val in logs.items()}
+    return {f'{split}_{key.item()}': val for key, val in logs.items()}
 
 
 @hydra.main('configs', 'wikitext2', version_base=None)
