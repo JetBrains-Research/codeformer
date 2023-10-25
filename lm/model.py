@@ -88,12 +88,14 @@ class CodeformerLM(nn.Module):
         targets = token_ids[:, :, 1:]
         # TODO: do not predict stop token for PPX
         loss_tens = torch.nn.functional.cross_entropy(logits, targets, reduction='none', ignore_index=self.pad_token_id)
-        loss = loss_tens.sum() / torch.count_nonzero(loss_tens)
+        num_tokens = torch.count_nonzero(loss_tens)
+        loss = loss_tens.sum() / num_tokens
         ppl = loss.exp()
         return {
             'loss_tens': loss_tens,
             'loss': loss,
-            'ppl': ppl
+            'ppl': ppl,
+            'num_tokens': num_tokens
         }
 
     def _get_modules(self, hf_model_name: str) -> dict[str: nn.Module | nn.Parameter | Tensor]:
