@@ -29,10 +29,10 @@ class TextTokens:
 
 class BatchedTextTokens:
     token_ids: Tensor
+    split_sizes_list: list[list[int]]
     max_tokens_per_split: int
     max_splits: int
     token_ids_list: list[list[int]]
-    split_sizes_list: list[list[int]]
 
     def __init__(self,
                  samples: List[TextTokens],
@@ -206,7 +206,7 @@ class WikiText103RawDataset(WikiTextDatasetBase):
     _dataset_names = ['wikitext', 'wikitext-103-raw-v1']
 
 
-class ThePileDataModule(LightningDataModule):
+class DataModuleBase(LightningDataModule, ABC):
     def __init__(self,
                  batch_size: int,
                  tokenizer: Tokenizer,
@@ -233,15 +233,9 @@ class ThePileDataModule(LightningDataModule):
                                  self.tokenizer.pad_token_id,
                                  self.tokenizer.bos_token_id,
                                  self.tokenizer.eos_token_id)
-
+    @abstractmethod
     def _create_dataset(self, split: str):
-        return ThePileDataset(split,
-                              self.tokenizer,
-                              self.max_text_tokens,
-                              self.max_chunks_number,
-                              self.max_chunk_size,
-                              self.min_chunks,
-                              self.min_tokens)
+        ...
 
     def _shared_dataloader(self, split: str) -> DataLoader:
         ds = self._create_dataset(split)
@@ -271,3 +265,45 @@ class ThePileDataModule(LightningDataModule):
     ) -> BatchedTextTokens:
         batch.move_to_device(device)
         return batch
+
+
+class ThePileDataModule(DataModuleBase):
+    def __init__(self,
+                 batch_size: int,
+                 tokenizer: Tokenizer,
+                 max_text_tokens: int,
+                 max_chunks_number: int,
+                 max_chunk_size: int,
+                 min_tokens: int,
+                 min_chunks: int,
+                 num_workers: int = 16,
+                 prefetch_factor: int = 8) -> None:
+        super().__init__(
+            batch_size,
+            tokenizer,
+            max_text_tokens,
+            max_chunks_number,
+            max_chunk_size,
+            min_tokens,
+            min_chunks,
+            num_workers,
+            prefetch_factor,
+        )
+
+    def _create_dataset(self, split: str):
+        return ThePileDataset(split,
+                              self.tokenizer,
+                              self.max_text_tokens,
+                              self.max_chunks_number,
+                              self.max_chunk_size,
+                              self.min_chunks,
+                              self.min_tokens)
+
+    def _create_dataset(self, split: str):
+        return WikiText2RawDataset(split,
+                                   self.tokenizer,
+                                   self.max_text_tokens,
+                                   self.max_chunks_number,
+                                   self.max_chunk_size,
+                                   self.min_chunks,
+                                   self.min_tokens)
