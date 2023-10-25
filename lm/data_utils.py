@@ -74,8 +74,8 @@ class LMDatasetBase:
             max_text_tokens: int,
             max_chunks_number: int,
             max_chunk_size: int,
-            min_chunks: int,
-            min_tokens: int
+            min_chunks: int = 1,
+            min_tokens: int = 1
     ):
         super(ThePileDataset).__init__()
         self.split = split
