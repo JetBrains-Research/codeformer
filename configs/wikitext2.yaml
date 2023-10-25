@@ -3,6 +3,7 @@
 #  # - override hydra/launcher: joblib
 #  - _self_
 
+epochs: 100
 weight_decay: 0.0
 learning_rate: 1e-4
 

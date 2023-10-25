@@ -1,5 +1,7 @@
 import hydra
 import torch
+from torch import nn, Tensor
+from torch.utils.data import DataLoader
 from transformers import AutoTokenizer
 from tqdm import tqdm
 import wandb
@@ -8,30 +10,42 @@ from lm.model import CodeformerLM
 from lm.data_utils import ThePileDataModule, WikiText2RawDataModule
 from lm.utils import setup_wandb
 
+
+@torch.no_grad()
+def evaluate(model: nn.Module,
+             dl: DataLoader,
+             device: torch.DeviceObjType,
+             split: str) -> dict[Tensor]:
+    results = []
+    for batch in dl:
+        batch = batch.to(device)
+        outputs = model(batch)
+        results.append(outputs)
+    log_probs_sum = 0
+    total_num_tokens = 0
+    total_loss = 0
+    total_samples = 0
+    for output in outputs:
+        log_probs_sum = log_probs_sum + output['loss'] * output['num_tokens']
+        total_num_tokens = total_num_tokens + output['num_tokens']
+        total_loss = total_loss + output['loss'] * output['batch_size']
+        total_samples = total_samples + output['batch_size']
+    ppl = log_probs_sum / total_num_tokens
+    loss = total_loss / total_samples
+    logs = {'ppl': ppl, 'loss': loss}
+    return {f'{split}_{key}': val for key, val in logs.items()}
+
+
 @hydra.main('configs', 'wikitext2', version_base=None)
 def main(args):
     print(args)
 
     setup_wandb(args)
-    args.batch_size = 128
-    args.micro_batch_size = 4
     assert args.batch_size % args.micro_batch_size == 0
     accumulation_factor = args.batch_size // args.micro_batch_size
 
-    args.max_text_tokens = 512
-    args.max_chunk_size = 14
-    args.max_chunks_number = 32
-    args.weight_decay = 0.0
-    args.learning_rate = 1e-4
-
     # TODO: write parameters gathering for weight_decay
     assert args.weight_decay == 0.0
-
-    args.min_tokens = 64
-    args.min_chunks = 8
-
-    args.num_workers_dl = 16
-    args.prefetch_factor_dl = 32
     # num_workers_dl = 0
     # prefetch_factor_dl = None
 
@@ -47,8 +61,9 @@ def main(args):
                                 num_workers=args.num_workers_dl,
                                 prefetch_factor=args.prefetch_factor_dl)
 
-    dl = dm.train_dataloader()
-    train_iterator = tqdm(dl)
+    dl_train = dm.train_dataloader()
+    dl_valid = dm.val_dataloader()
+    train_iterator = tqdm(dl_train)
 
     device = torch.device('cuda:0')
     model = CodeformerLM(args.model_name).to(device)
@@ -56,20 +71,24 @@ def main(args):
 
     processed_batches = 0
     losses_micro_batches = []
-    for batch in train_iterator:
-        batch = batch.to(device)
-        outputs = model(batch)
-        loss = outputs['loss']
-        loss.backward()
-        losses_micro_batches.append(loss.item())
-        if (processed_batches + 1) % accumulation_factor == 0:
-            train_iterator.set_description(f'Loss: {loss.item():.3f}')
-            opt.step()
-            opt.zero_grad()
-            mini_batch_loss = torch.mean(torch.tensor(losses_micro_batches))
-            losses_micro_batches = []
-            wandb.log({'loss': mini_batch_loss})
-        processed_batches += 1
+    for epoch in args.epoch:
+        for batch in train_iterator:
+            batch = batch.to(device)
+            outputs = model(batch)
+            loss = outputs['loss']
+            loss.backward()
+            losses_micro_batches.append(loss.item())
+            if (processed_batches + 1) % accumulation_factor == 0:
+                train_iterator.set_description(f'Loss: {loss.item():.3f}')
+                opt.step()
+                opt.zero_grad()
+                mini_batch_loss = torch.mean(torch.tensor(losses_micro_batches))
+                losses_micro_batches = []
+                wandb.log({'loss': mini_batch_loss})
+            processed_batches += 1
+        eval_results = evaluate(model, dl_valid, device, 'val')
+        eval_results['epoch'] = epoch + 1
+        wandb.log(eval_results)
 
 
 if __name__ == '__main__':

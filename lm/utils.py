@@ -6,6 +6,10 @@ import wandb
 
 
 def setup_wandb(args=None):
+    wandb.define_metric("epoch")
+    # define which metrics will be plotted against it
+    wandb.define_metric("val_loss", step_metric="epoch", summary='min')
+    wandb.define_metric("val_ppl", step_metric="epoch", summary='min')
     mode = 'disabled' if args['dbg'] else None
     run = wandb.init(project="codeformer", mode=mode)
     wandb.run.name = args['name']
