@@ -93,10 +93,10 @@ def main(args):
             processed_batches += 1
         eval_results = evaluate(model, dl_valid, device, 'val')
         eval_results['epoch'] = epoch + 1
-        print('Val evaluation: ', eval_results)
+        print('Val scores: ', eval_results)
         wandb.log(eval_results)
     eval_results = evaluate(model, dl_test, device, 'test')
-    print('Test evaluation: ', eval_results)
+    print('Test scores: ', eval_results)
     wandb.run.summary.update(eval_results)
 
 
