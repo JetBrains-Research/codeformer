@@ -71,7 +71,7 @@ def main(args):
 
     processed_batches = 0
     losses_micro_batches = []
-    for epoch in args.epoch:
+    for epoch in range(args.epochs):
         for batch in train_iterator:
             batch = batch.to(device)
             outputs = model(batch)
