@@ -6,7 +6,7 @@ progress_bar_refresh_rate: 1
 model:
   configuration:
 
-  encoder: Codeformer
+  encoder: BigBird
   decoder: Transformer
 
   Transformer:
@@ -48,9 +48,9 @@ data:
   max_code_parts: 512
   max_label_parts: 7
   max_subsequence_size: 14
-  max_subsequences_number: 64
+  max_subsequences_number: 384
   programming_language: 'python'
-  path_to_tree_sitter: '/home/arkhipov/soft/tree-sitter-python'
+  path_to_tree_sitter: '../vendor/tree-sitter-python'
 
 wandb:
   project: codeformer
@@ -80,7 +80,7 @@ optimizer:
 train:
 
   dataloader:
-    batch_size: 2
+    batch_size: 16
     shuffle: True
     num_workers: 4
     prefetch_factor: 2
@@ -90,7 +90,7 @@ train:
 val:
 
   dataloader:
-    batch_size: 2
+    batch_size: 16
     num_workers: 4
     pin_memory: True
     persistent_workers: True
@@ -102,7 +102,7 @@ val:
 test:
 
   dataloader:
-    batch_size: 2
+    batch_size: 16
     num_workers: 4
     pin_memory: True
     persistent_workers: True
