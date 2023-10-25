@@ -95,7 +95,8 @@ class CodeformerLM(nn.Module):
             'loss_tens': loss_tens,
             'loss': loss,
             'ppl': ppl,
-            'num_tokens': num_tokens
+            'num_tokens': num_tokens,
+            'batch_size': batch_size
         }
 
     def _get_modules(self, hf_model_name: str) -> dict[str: nn.Module | nn.Parameter | Tensor]:
