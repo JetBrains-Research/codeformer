@@ -42,7 +42,7 @@ class LanguageModelingModel(LightningModule):
     def _get_lm(self) -> nn.Module:
         if self._config.model.LM == "CodeformerLM":
             return CodeformerLM(
-                self._config.model.CodeformerLM, self._vocab
+                self._config.model.CodeformerLM, self._config.data, self._vocab
             )
         else:
             raise ValueError("Unknown LM type")
@@ -53,7 +53,7 @@ class LanguageModelingModel(LightningModule):
     def forward(self, batch, step: Optional[str]) -> Any:
         if step is None:
             step = "test"
-        return self._lm(batch, step)
+        return self._lm(batch)
 
     #TODO: rework
     def _shared_step(self, batch, step: str) -> Dict:

@@ -15,7 +15,7 @@ model:
       output_hidden_states: True
       # n_inner will be 4 * n_embd by default
   
-    split_encoder_config:
+    split_decoder_config:
       n_embd: 768
       n_layer: 12
       n_head: 12

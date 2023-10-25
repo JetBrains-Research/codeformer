@@ -6,7 +6,7 @@ progress_bar_refresh_rate: 1
 model:
   configuration:
 
-  encoder: BigBird
+  encoder: Codeformer
   decoder: Transformer
 
   Transformer:
