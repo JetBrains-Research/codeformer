@@ -63,6 +63,7 @@ def main(args):
 
     dl_train = dm.train_dataloader()
     dl_valid = dm.val_dataloader()
+    dl_test = dm.val_dataloader()
     train_iterator = tqdm(dl_train)
 
     device = torch.device('cuda:0')
@@ -89,6 +90,8 @@ def main(args):
         eval_results = evaluate(model, dl_valid, device, 'val')
         eval_results['epoch'] = epoch + 1
         wandb.log(eval_results)
+    eval_results = evaluate(model, dl_test, device, 'test')
+    wandb.run.summary.update(eval_results)
 
 
 if __name__ == '__main__':
