@@ -12,49 +12,6 @@ from torch.utils.data import IterableDataset
 from jetnn.data_processing.tree_representation.my_text_tree import MyTextTree
 
 
-class ThePileDataset(IterableDataset):
-    def __init__(
-            self,
-            split: str,
-            tokenizer: Tokenizer,
-            max_text_tokens: int,
-            max_chunks_number: int,
-            max_chunk_size: int,
-            min_chunks: int,
-            min_tokens: int
-    ):
-        super(ThePileDataset).__init__()
-        self.ds = load_dataset('monology/pile-uncopyrighted', streaming=True, split=split)
-        self.max_text_tokens = max_text_tokens
-        self.max_chunks_number = max_chunks_number
-        self.max_chunk_size = max_chunk_size
-        self.tokenizer = tokenizer
-        self._text_tree = MyTextTree()
-        self.min_chunks = min_chunks
-        self.min_tokens = min_tokens
-
-    def __iter__(self):
-        for sample in self.ds:
-            text = sample['text']
-            tokenized_text = self.tokenizer.encode(
-                text,
-                add_special_tokens=False,
-                max_length=self.max_text_tokens,
-                truncation="longest_first"
-            )
-            tokens = [self.tokenizer.convert_ids_to_tokens([token])[0] for token in tokenized_text]
-            if len(tokens) < self.min_tokens:
-                continue
-            truncated_text = self.tokenizer.decode(tokenized_text)
-            tokens_splits = self._text_tree.process_text(
-                truncated_text, tokens, self.max_chunk_size
-            )
-            tokens_splits = tokens_splits[:self.max_chunks_number]
-            if len(tokens_splits) < self.min_chunks:
-                continue
-            yield TextTokens(tokenized_text, tokens_splits)
-
-
 @dataclass
 class TextTokens:
     token_ids: Tensor # can be code, not just text
@@ -107,6 +64,76 @@ class BatchedTextTokens:
     def to(self, device: torch.DeviceObjType) -> "BatchedTextTokens":
         self.token_ids = self.token_ids.to(device)
         return self
+
+
+class LMDatasetBase:
+    def __init__(
+            self,
+            split: str,
+            tokenizer: Tokenizer,
+            max_text_tokens: int,
+            max_chunks_number: int,
+            max_chunk_size: int,
+            min_chunks: int,
+            min_tokens: int
+    ):
+        super(ThePileDataset).__init__()
+        self.split = split
+        self.max_text_tokens = max_text_tokens
+        self.max_chunks_number = max_chunks_number
+        self.max_chunk_size = max_chunk_size
+        self.tokenizer = tokenizer
+        self._text_tree = MyTextTree()
+        self.min_chunks = min_chunks
+        self.min_tokens = min_tokens
+
+    def parse_text(self, text: str) -> TextTokens:
+        tokenized_text = self.tokenizer.encode(
+            text,
+            add_special_tokens=False,
+            max_length=self.max_text_tokens,
+            truncation="longest_first"
+        )
+        tokens = [self.tokenizer.convert_ids_to_tokens([token])[0] for token in tokenized_text]
+        if len(tokens) < self.min_tokens:
+            return None
+        truncated_text = self.tokenizer.decode(tokenized_text)
+        tokens_splits = self._text_tree.process_text(
+            truncated_text, tokens, self.max_chunk_size
+        )
+        tokens_splits = tokens_splits[:self.max_chunks_number]
+        if len(tokens_splits) < self.min_chunks:
+            return None
+        return TextTokens(tokenized_text, tokens_splits)
+
+
+class ThePileDataset(LMDatasetBase, IterableDataset):
+    def __init__(
+            self,
+            split: str,
+            tokenizer: Tokenizer,
+            max_text_tokens: int,
+            max_chunks_number: int,
+            max_chunk_size: int,
+            min_chunks: int,
+            min_tokens: int
+    ):
+        super().__init__(split,
+                         tokenizer,
+                         max_text_tokens,
+                         max_chunks_number,
+                         max_chunk_size,
+                         min_chunks,
+                         min_tokens)
+
+        self.ds = load_dataset('monology/pile-uncopyrighted', streaming=True, split=split)
+
+    def __iter__(self) -> TextTokens:
+        for sample in self.ds:
+            text = sample['text']
+            sample = self.parse_text(text)
+            if sample is not None:
+                yield sample
 
 
 class ThePileDataModule(LightningDataModule):
