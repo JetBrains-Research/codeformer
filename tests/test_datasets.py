@@ -14,8 +14,13 @@ MIN_TOKENS = 128
 BATCH_SIZE = 2
 
 
-def test_wikitext_datasets():
-    ...
+def test_wikitext_data_module():
+    tokenizer = AutoTokenizer.from_pretrained(TEST_TOKENIZER_NAME)
+    dm = ThePileDataModule(BATCH_SIZE, tokenizer, MAX_TEXT_TOKENS,
+                           MAX_CHUNKS_NUMBER, MAX_CHUNK_SIZE, MIN_TOKENS,
+                           MIN_CHUNKS, num_workers=0, prefetch_factor=None)
+    train_dl = dm.train_dataloader()
+    batch = next(iter(train_dl))
 
 
 def test_the_pile_data_module():
