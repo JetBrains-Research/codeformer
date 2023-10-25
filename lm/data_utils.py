@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import List, Optional
 from dataclasses import dataclass
 
@@ -134,6 +135,75 @@ class ThePileDataset(LMDatasetBase, IterableDataset):
             sample = self.parse_text(text)
             if sample is not None:
                 yield sample
+
+
+class WikiTextDatasetBase(LMDatasetBase, ABC):
+
+    @property
+    @abstractmethod
+    def _dataset_names(self):
+        ...
+
+    # Fix it to be consistent with evaluation from other papers
+    def __init__(
+            self,
+            split: str,
+            tokenizer: Tokenizer,
+            max_text_tokens: int,
+            max_chunks_number: int,
+            max_chunk_size: int,
+            min_chunks: int,
+            min_tokens: int
+    ):
+        super().__init__(split,
+                         tokenizer,
+                         max_text_tokens,
+                         max_chunks_number,
+                         max_chunk_size,
+                         min_chunks,
+                         min_tokens)
+
+        ds_raw = load_dataset(*self._dataset_names)[split]
+        self.ds = []
+        current_sample_texts = []
+        for sample in ds_raw:
+            text = sample['text']
+            striped_text = text.lstrip()
+            if not striped_text or striped_text[0] == '=':
+                if current_sample_texts:
+                    self.ds.append('\n'.join(current_sample_texts))
+                    current_sample_texts = []
+            else:
+                current_sample_texts.append(text)
+        if current_sample_texts:
+            self.ds.append('\n'.join(current_sample_texts))
+
+    def __getitem__(self, idx: int) -> TextTokens:
+        text = self.ds[idx]
+        sample = self.parse_text(text)
+        return sample
+
+
+class WikiText2Dataset(WikiTextDatasetBase):
+    _dataset_names = ['wikitext', 'wikitext-2-v1']
+
+
+class WikiText103Dataset(WikiTextDatasetBase):
+    _dataset_names = ['wikitext', 'wikitext-103-v1']
+
+
+class WikiText2RawDataset(WikiTextDatasetBase):
+    # NOTE: This dataset is not tokenized!
+    # To compare perplexity with other researchers you need to use
+    # WikiText2Dataset not this one
+    _dataset_names = ['wikitext', 'wikitext-2-raw-v1']
+
+
+class WikiText103RawDataset(WikiTextDatasetBase):
+    # NOTE: This dataset is not tokenized!
+    # To compare perplexity with other researchers you need to use
+    # WikiText2Dataset not this one
+    _dataset_names = ['wikitext', 'wikitext-103-raw-v1']
 
 
 class ThePileDataModule(LightningDataModule):
