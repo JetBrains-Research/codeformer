@@ -51,8 +51,8 @@ def main():
     losses_micro_batches = []
     for batch in train_iterator:
         batch = batch.to(device)
-        loss_tens = model(batch)
-        loss = loss_tens.sum() / torch.count_nonzero(loss_tens)
+        outputs = model(batch)
+        loss = outputs['loss']
         loss.backward()
         losses_micro_batches.append(loss.item())
         if (processed_batches + 1) % accumulation_factor == 0:

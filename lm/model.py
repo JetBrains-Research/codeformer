@@ -19,7 +19,7 @@ class CodeformerLM(nn.Module):
         self.register_buffer('pad_token_id', modules_dict['pad_token_id'])
         self.pad_token_id: Tensor
 
-    def forward(self, batch: BatchedTextTokens) -> Tensor:
+    def forward(self, batch: BatchedTextTokens) -> dict[str, Tensor]:
         # token_ids.shape = batch_size, max_chunks, max_tokens_per_chunk
         token_ids = batch.token_ids
         chunk_att_mask = torch.any(token_ids != self.pad_token_id, 2)
@@ -88,7 +88,13 @@ class CodeformerLM(nn.Module):
         targets = token_ids[:, :, 1:]
         # TODO: do not predict stop token for PPX
         loss_tens = torch.nn.functional.cross_entropy(logits, targets, reduction='none', ignore_index=self.pad_token_id)
-        return loss_tens
+        loss = loss_tens.sum() / torch.count_nonzero(loss_tens)
+        ppl = loss.exp()
+        return {
+            'loss_tens': loss_tens,
+            'loss': loss,
+            'ppl': ppl
+        }
 
     def _get_modules(self, hf_model_name: str) -> dict[str: nn.Module | nn.Parameter | Tensor]:
         deberta_v2_prefix = 'microsoft/deberta-v2'
