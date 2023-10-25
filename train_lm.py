@@ -33,7 +33,7 @@ def evaluate(model: nn.Module,
     ppl = torch.exp(log_probs_sum / total_num_tokens)
     loss = total_loss / total_samples
     logs = {'ppl': ppl, 'loss': loss}
-    return {f'{split}_{key.item()}': val for key, val in logs.items()}
+    return {f'{split}_{key}': val.item() for key, val in logs.items()}
 
 
 @hydra.main('configs', 'wikitext2', version_base=None)
