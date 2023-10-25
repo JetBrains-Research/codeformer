@@ -183,6 +183,9 @@ class WikiTextDatasetBase(LMDatasetBase, ABC):
         sample = self.parse_text(text)
         return sample
 
+    def __len__(self) -> int:
+        return len(self.ds)
+
 
 class WikiText2Dataset(WikiTextDatasetBase):
     _dataset_names = ['wikitext', 'wikitext-2-v1']
