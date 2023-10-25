@@ -6,12 +6,11 @@ import wandb
 
 
 def setup_wandb(args=None):
-    wandb.define_metric("epoch")
-    # define which metrics will be plotted against it
-    wandb.define_metric("val_loss", step_metric="epoch", summary='min')
-    wandb.define_metric("val_ppl", step_metric="epoch", summary='min')
     mode = 'disabled' if args['dbg'] else None
     run = wandb.init(project="codeformer", mode=mode)
+    wandb.define_metric("epoch")
+    wandb.define_metric("val_loss", step_metric="epoch", summary='min')
+    wandb.define_metric("val_ppl", step_metric="epoch", summary='min')
     wandb.run.name = args['name']
     # Deep copy is really needed here, hydra says
     wandb.config.update(dict(deepcopy(args)))
