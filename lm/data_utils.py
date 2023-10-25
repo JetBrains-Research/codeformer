@@ -170,7 +170,8 @@ class WikiTextDatasetBase(LMDatasetBase, Dataset, ABC):
             striped_text = text.lstrip()
             if not striped_text or striped_text[0] == '=':
                 if current_sample_texts:
-                    self.ds.append('\n'.join(current_sample_texts))
+                    sample_text = '\n'.join(current_sample_texts)
+                    self.ds.append(sample_text)
                     current_sample_texts = []
             else:
                 current_sample_texts.append(text)
