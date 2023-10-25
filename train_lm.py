@@ -63,7 +63,7 @@ def main(args):
 
     dl_train = dm.train_dataloader()
     dl_valid = dm.val_dataloader()
-    dl_test = dm.val_dataloader()
+    dl_test = dm.test_dataloader
 
     device = torch.device('cuda:0')
     model = CodeformerLM(args.model_name).to(device)
