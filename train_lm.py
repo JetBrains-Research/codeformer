@@ -71,7 +71,7 @@ def main(args):
 
     eval_results = evaluate(model, dl_valid, device, 'val')
     eval_results['epoch'] = 0
-    print('Test scores: ', eval_results)
+    print('Val scores: ', eval_results)
     wandb.log(eval_results)
 
     train_iterator = tqdm(dl_train)
