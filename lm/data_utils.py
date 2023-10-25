@@ -271,28 +271,6 @@ class DataModuleBase(LightningDataModule, ABC):
 
 
 class ThePileDataModule(DataModuleBase):
-    def __init__(self,
-                 batch_size: int,
-                 tokenizer: Tokenizer,
-                 max_text_tokens: int,
-                 max_chunks_number: int,
-                 max_chunk_size: int,
-                 min_tokens: int,
-                 min_chunks: int,
-                 num_workers: int = 16,
-                 prefetch_factor: int = 8) -> None:
-        super().__init__(
-            batch_size,
-            tokenizer,
-            max_text_tokens,
-            max_chunks_number,
-            max_chunk_size,
-            min_tokens,
-            min_chunks,
-            num_workers,
-            prefetch_factor,
-        )
-
     def _create_dataset(self, split: str):
         return ThePileDataset(split,
                               self.tokenizer,
