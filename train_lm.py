@@ -64,12 +64,16 @@ def main(args):
     dl_train = dm.train_dataloader()
     dl_valid = dm.val_dataloader()
     dl_test = dm.val_dataloader()
-    train_iterator = tqdm(dl_train)
 
     device = torch.device('cuda:0')
     model = CodeformerLM(args.model_name).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
+    eval_results = evaluate(model, dl_valid, device, 'val')
+    eval_results['epoch'] = 0
+    wandb.log(eval_results)
+
+    train_iterator = tqdm(dl_train)
     processed_batches = 0
     losses_micro_batches = []
     for epoch in range(args.epochs):
