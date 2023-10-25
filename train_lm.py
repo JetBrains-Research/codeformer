@@ -30,7 +30,7 @@ def evaluate(model: nn.Module,
         total_num_tokens = total_num_tokens + res['num_tokens']
         total_loss = total_loss + res['loss'] * res['batch_size']
         total_samples = total_samples + res['batch_size']
-    ppl = log_probs_sum / total_num_tokens
+    ppl = torch.exp(log_probs_sum / total_num_tokens)
     loss = total_loss / total_samples
     logs = {'ppl': ppl, 'loss': loss}
     return {f'{split}_{key}': val for key, val in logs.items()}
