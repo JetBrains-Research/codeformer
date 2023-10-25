@@ -15,17 +15,15 @@ dbg: false
 verbose: true
 train_steps: 64000
 evaluate_every: epoch  # 1000 or 1 or any num step
-wandb_tag: ???
 use_batch_norm: false
 full_batch_val: true
 
-dataset_name: 'wikitext2raw'
-max_text_tokens: inf
+dataset_name: wikitext2raw
+max_text_tokens: 1048576  # 2 ** 20
 max_chunk_size: 14
 max_chunks_number: 32
 min_tokens: 1
 min_chunks: 1
-
 
 num_workers_dl: 16
 prefetch_factor_dl: 32
