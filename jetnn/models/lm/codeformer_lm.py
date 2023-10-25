@@ -8,6 +8,7 @@ from jetnn.data_processing.tasks.language_modeling import (
     BatchedTextTokens
 )
 
+
 class CodeformerLM(nn.Module):
     def __init__(self, codeformer_config: DictConfig, vocab):
         super().__init__()
