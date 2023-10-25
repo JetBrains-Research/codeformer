@@ -16,6 +16,7 @@ def evaluate(model: nn.Module,
              dl: DataLoader,
              device: torch.DeviceObjType,
              split: str) -> dict[str, float]:
+    model.eval()
     results = []
     for batch in dl:
         batch = batch.to(device)
@@ -33,6 +34,7 @@ def evaluate(model: nn.Module,
     ppl = torch.exp(log_probs_sum / total_num_tokens)
     loss = total_loss / total_samples
     logs = {'ppl': ppl, 'loss': loss}
+    model.train()
     return {f'{split}_{key}': val.item() for key, val in logs.items()}
 
 
@@ -67,6 +69,7 @@ def main(args):
 
     device = torch.device('cuda:0')
     model = CodeformerLM(args.model_name).to(device)
+    model.train()
     opt = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     eval_results = evaluate(model, dl_valid, device, 'val')
