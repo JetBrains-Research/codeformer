@@ -136,7 +136,7 @@ class ThePileDataset(LMDatasetBase, IterableDataset):
                 yield sample
 
 
-class WikiTextDatasetBase(LMDatasetBase, ABC):
+class WikiTextDatasetBase(LMDatasetBase, Dataset, ABC):
 
     @property
     @abstractmethod
