@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import torch
 from torch import Tensor, LongTensor
 import wandb
@@ -7,7 +9,8 @@ def setup_wandb(args=None):
     mode = 'disabled' if args['dbg'] else None
     run = wandb.init(project="codeformer", mode=mode)
     wandb.run.name = args['name']
-    wandb.config.update(args)
+    # Deep copy is really needed here, hydra says
+    wandb.config.update(dict(deepcopy(args)))
     return run
 
 
