@@ -25,11 +25,11 @@ def evaluate(model: nn.Module,
     total_num_tokens = 0
     total_loss = 0
     total_samples = 0
-    for output in outputs:
-        log_probs_sum = log_probs_sum + output['loss'] * output['num_tokens']
-        total_num_tokens = total_num_tokens + output['num_tokens']
-        total_loss = total_loss + output['loss'] * output['batch_size']
-        total_samples = total_samples + output['batch_size']
+    for res in results:
+        log_probs_sum = log_probs_sum + res['loss'] * res['num_tokens']
+        total_num_tokens = total_num_tokens + res['num_tokens']
+        total_loss = total_loss + res['loss'] * res['batch_size']
+        total_samples = total_samples + res['batch_size']
     ppl = log_probs_sum / total_num_tokens
     loss = total_loss / total_samples
     logs = {'ppl': ppl, 'loss': loss}
