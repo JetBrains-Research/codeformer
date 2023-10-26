@@ -54,9 +54,12 @@ def dump_wikitext_dataset(dump_dir: str | Path | None = None) -> None:
     }
     for dataset_class in WIKITEXT_DATASET_CLASSES:
         for split in ['train', 'validation', 'test']:
+            
+            # noinspection PyTypeChecker
             ds = dataset_class(split, tokenizer, max_text_tokens,
                                max_chunks_number, max_chunk_size,
                                min_chunks, min_tokens)
+
             with open(dump_dir / f'{ds_to_file_name[dataset_class]}-{split}.jsonl', 'w') as fp:
                 for sample in ds.ds:
                     fp.write(json.dumps({'text': sample}) + '\n')
