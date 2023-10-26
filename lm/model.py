@@ -22,13 +22,13 @@ class CodeformerLM(nn.Module):
     def forward(self, batch: BatchedTextTokens) -> dict[str, Tensor]:
         # token_ids.shape = batch_size, max_chunks, max_tokens_per_chunk
         token_ids_chunk = batch.token_ids_chunk
-        chunk_att_mask = torch.any(token_ids_chunk != self.pad_token_id, 2)
         batch_size, max_chunks, max_tokens_per_chunk = token_ids_chunk.shape
 
         # Chunk embeddings
         token_ids_stacked = token_ids_chunk.reshape(batch_size * max_chunks, max_tokens_per_chunk)
-        token_att_mask = token_ids_stacked != self.pad_token_id
-        token_units = self.encoder_token(input_ids=token_ids_stacked, attention_mask=token_att_mask).last_hidden_state
+        att_mask_chunk_tokens = batch.att_mask_chunk_tokens.resize_as(token_ids_stacked)
+        token_units = self.encoder_token(input_ids=token_ids_stacked,
+                                         attention_mask=att_mask_chunk_tokens).last_hidden_state
         hidden_size = token_units.shape[2]
         chunk_embs = token_units.reshape(batch_size, max_chunks, max_tokens_per_chunk, hidden_size)[:, :, 0, :]
 
@@ -42,7 +42,8 @@ class CodeformerLM(nn.Module):
             chunk_embs = chunk_embs + chunk_pos_embs
 
         # Chunk representations
-        chunk_units = self.encoder_chunk(inputs_embeds=chunk_embs, attention_mask=chunk_att_mask).last_hidden_state
+        chunk_units = self.encoder_chunk(inputs_embeds=chunk_embs,
+                                         attention_mask=batch.att_mask_chunks).last_hidden_state
         chunk_sos_emb = self.chunk_sos_embedding.reshape(1, 1, -1).repeat(batch_size, 1, 1)
         chunk_units_sos = torch.cat([chunk_sos_emb, chunk_units[:, :-1]], 1)
 
