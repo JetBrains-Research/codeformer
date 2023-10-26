@@ -22,13 +22,22 @@ python3 run_methodnaming.py train -c ../../configs/config_methodnaming.yaml -cd 
 To evaluate the NLM model use the the `generate(input_ids: LongTensor, max_new_tokens: int)` can be used. 
 Example of usage:
 ```python
-from lm.model import CodeformerLM; from transformers import AutoTokenizer
 
-max_new_tokens = 10
-model_name = 'microsoft/deberta-v3-small'
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = CodeformerLM(model_name)
-# Only single batch is supported by now
+import torch
+from lm.utils import get_model_from_config, get_tokenizer_from_config
+from omegaconf import OmegaConf
+
+# device = torch.device('cuda:3')  # third GPU
+device = torch.device('cpu')
+config = OmegaConf.load('/mnt/data/shared-data/codeformer/models/rand_init_codeformer.yaml')
+print(config.load_path)
+# >>> /mnt/data/shared-data/codeformer/models/rand_init_codeformer.pt
+# If needed you can:
+# config.load_path = '/your/path.pt'
+model = get_model_from_config(config)
+tokenizer = get_tokenizer_from_config(config)
+
+max_new_tokens = 20
 token_ids = tokenizer.encode('The man', return_tensors='pt', add_special_tokens=False)
 pred_ids = model.generate(token_ids, max_new_tokens)
 # If you want to get only predicted text without prefix 
