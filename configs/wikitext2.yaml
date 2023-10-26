@@ -7,7 +7,8 @@ epochs: 100
 weight_decay: 0.0
 learning_rate: 1e-4
 
-model_name: microsoft/deberta-v3-small
+model_name: codeformer
+base_model_name: microsoft/deberta-v3-small
 batch_size: 128
 micro_batch_size: 4
 name: ???
@@ -28,3 +29,5 @@ min_chunks: 1
 
 num_workers_dl: 16
 prefetch_factor_dl: 32
+
+load_path: /mnt/data/shared-data/codeformer/models/rand_init_codeformer.pt

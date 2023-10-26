@@ -3,11 +3,15 @@ import json
 from pathlib import Path
 
 import torch
+from torch import nn
+from omegaconf import OmegaConf
 from torch import Tensor, LongTensor
 import wandb
+from transformers import AutoModel, AutoTokenizer
 
 from lm.data_utils import (WikiText2RawDataset, WikiText2Dataset,
                            WikiText103Dataset, WikiText103RawDataset)
+from lm.model import CodeformerLM
 
 WIKITEXT_DATASET_CLASSES =[WikiText2Dataset, WikiText2RawDataset,
                            WikiText103Dataset, WikiText103RawDataset]
@@ -57,3 +61,23 @@ def dump_wikitext_dataset(dump_dir: str | Path | None = None) -> None:
                 for sample in ds.ds:
                     fp.write(json.dumps({'text': sample}) + '\n')
 
+
+def get_model_from_config(config: str | Path | OmegaConf) -> nn.Module:
+    # config: either a path to a YAML file or an OmegaConf constructed
+    # from the YAML
+    if isinstance(config, (str, Path)):
+        config = OmegaConf.load(config)
+    if config.model_name == 'codeformer':
+        model = CodeformerLM(config.base_model_name)
+    else:
+        model = AutoModel.from_pretrained(config.model_name)
+    if config.load_path is not None:
+        print(f'Loading model from: {config.load_path}')
+        model.load_state_dict(torch.load(config.load_path, map_location='cpu'))
+    return model
+
+
+def get_tokenizer_from_config(config: str | Path | OmegaConf) -> nn.Module:
+    if isinstance(config, (str, Path)):
+        config = OmegaConf.load(config)
+    return AutoTokenizer.from_pretrained(config.base_model_name)
