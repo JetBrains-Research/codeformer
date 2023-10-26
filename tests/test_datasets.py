@@ -4,12 +4,14 @@ import pytest
 import torch
 from transformers import AutoTokenizer
 
+from consts import (WIKITEXT_SPLITS, MAX_TEXT_TOKENS,
+                    MAX_CHUNKS_NUMBER, MAX_CHUNK_SIZE,
+                    MIN_TOKENS, MIN_CHUNKS,
+                    TEST_TOKENIZER_NAME, BATCH_SIZE)
 from lm.data_utils import (WikiText2DataModule,
                            ThePileDataModule,
                            WikiTextDatasetBase)
-from consts import (WIKITEXT_DATASET_CLASSES, WIKITEXT_SPLITS, MAX_TEXT_TOKENS,
-                    MAX_CHUNKS_NUMBER, MAX_CHUNK_SIZE, MIN_TOKENS, MIN_CHUNKS,
-                    TEST_TOKENIZER_NAME, BATCH_SIZE)
+from lm.utils import WIKITEXT_DATASET_CLASSES
 
 
 @pytest.mark.parametrize('ds_class,split', product(WIKITEXT_DATASET_CLASSES, WIKITEXT_SPLITS))

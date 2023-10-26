@@ -1,8 +1,16 @@
 from copy import deepcopy
+import json
+from pathlib import Path
 
 import torch
 from torch import Tensor, LongTensor
 import wandb
+
+from lm.data_utils import (WikiText2RawDataset, WikiText2Dataset,
+                           WikiText103Dataset, WikiText103RawDataset)
+
+WIKITEXT_DATASET_CLASSES =[WikiText2Dataset, WikiText2RawDataset,
+                           WikiText103Dataset, WikiText103RawDataset]
 
 
 def setup_wandb(args=None):
