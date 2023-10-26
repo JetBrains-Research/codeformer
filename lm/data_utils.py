@@ -14,8 +14,8 @@ from jetnn.data_processing.tree_representation.my_text_tree import MyTextTree
 
 @dataclass
 class TextTokens:
-    token_ids: Tensor # can be code, not just text
-    split_sizes: Tensor
+    token_ids: list[int] # can be code, not just text
+    split_sizes: list[int]
 
     @property
     def num_splits(self) -> int:
