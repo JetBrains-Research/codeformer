@@ -227,8 +227,8 @@ class DataModuleBase(LightningDataModule, ABC):
                  max_text_tokens: int,
                  max_chunks_number: int,
                  max_chunk_size: int,
-                 min_tokens: int,
-                 min_chunks: int,
+                 min_tokens: int = 1,
+                 min_chunks: int = 1,
                  num_workers: int = 16,
                  prefetch_factor: int = 8) -> None:
         super().__init__()
