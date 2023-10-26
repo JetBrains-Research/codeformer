@@ -55,11 +55,11 @@ class BatchedTextTokens:
         self.split_sizes_list = [s.split_sizes for s in samples]
         # + 2 because of bos and eos tokens
         self.token_ids = pad_token_id * torch.ones(batch_size,
-                                                   self.max_tokens_per_sample + 2,
+                                                   self.max_tokens_per_sample,
                                                    dtype=torch.long)
         self.token_ids_chunk = pad_token_id * torch.ones(batch_size,
                                                          self.max_splits,
-                                                         self.max_tokens_per_split + 2,
+                                                         self.max_tokens_per_split,
                                                          dtype=torch.long)
         self.pad_token_id = pad_token_id
         self.bos_token_id = bos_token_id
