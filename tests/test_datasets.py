@@ -4,25 +4,12 @@ import pytest
 import torch
 from transformers import AutoTokenizer
 
-from lm.data_utils import (WikiText2Dataset, WikiText103Dataset,
-                           WikiText2RawDataset, WikiText103RawDataset,
-                           ThePileDataset, ThePileDataModule,
+from lm.data_utils import (WikiText2DataModule,
+                           ThePileDataModule,
                            WikiTextDatasetBase)
-
-TEST_TOKENIZER_NAME = 'microsoft/deberta-v3-base'
-
-MAX_TEXT_TOKENS = 2048
-MAX_CHUNK_SIZE = 14
-MAX_CHUNKS_NUMBER = 384
-MIN_CHUNKS = 1
-MIN_TOKENS = 1
-BATCH_SIZE = 2
-
-WIKITEXT_DATASET_CLASSES =[WikiText2Dataset,
-                           WikiText2RawDataset,
-                           WikiText103Dataset,
-                           WikiText103RawDataset]
-WIKITEXT_SPLITS = ['train', 'validation', 'test']
+from consts import (WIKITEXT_DATASET_CLASSES, WIKITEXT_SPLITS, MAX_TEXT_TOKENS,
+                    MAX_CHUNKS_NUMBER, MAX_CHUNK_SIZE, MIN_TOKENS, MIN_CHUNKS,
+                    TEST_TOKENIZER_NAME, BATCH_SIZE)
 
 
 @pytest.mark.parametrize('ds_class,split', product(WIKITEXT_DATASET_CLASSES, WIKITEXT_SPLITS))
@@ -38,9 +25,9 @@ def test_wikitext_datasets(ds_class: WikiTextDatasetBase, split: str):
 
 def test_wikitext_data_module():
     tokenizer = AutoTokenizer.from_pretrained(TEST_TOKENIZER_NAME)
-    dm = ThePileDataModule(BATCH_SIZE, tokenizer, MAX_TEXT_TOKENS,
-                           MAX_CHUNKS_NUMBER, MAX_CHUNK_SIZE, MIN_TOKENS,
-                           MIN_CHUNKS, num_workers=0, prefetch_factor=None)
+    dm = WikiText2DataModule(BATCH_SIZE, tokenizer, MAX_TEXT_TOKENS,
+                             MAX_CHUNKS_NUMBER, MAX_CHUNK_SIZE, MIN_TOKENS,
+                             MIN_CHUNKS, num_workers=0, prefetch_factor=None)
     train_dl = dm.train_dataloader()
     batch = next(iter(train_dl))
 

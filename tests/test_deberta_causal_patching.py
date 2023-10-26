@@ -38,7 +38,8 @@ class ExpectedJacobians:
 
 
 def test_causal_patching_deberta():
-    device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+    # device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device('cpu')
     model = DebertaV2Model.from_pretrained('microsoft/deberta-v3-base').to(device)
     batch_size = 2
     seq_len = 4
