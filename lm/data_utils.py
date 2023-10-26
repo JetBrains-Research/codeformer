@@ -28,8 +28,10 @@ class TextTokens:
 
 class BatchedTextTokens:
     token_ids: Tensor
+    token_ids_chunk: Tensor
     split_sizes_list: list[list[int]]
     max_tokens_per_split: int
+    max_tokens_per_sample: int
     max_splits: int
     token_ids_list: list[list[int]]
 
@@ -40,18 +42,27 @@ class BatchedTextTokens:
                  eos_token_id: int) -> None:
         # + 2 because of bos and eos tokens
         self.max_tokens_per_split = max(s.max_tokens_per_split for s in samples) + 2
+        self.max_tokens_per_sample = max(len(s.token_ids) for s in samples) + 2
         self.max_splits = max(s.num_splits for s in samples)
         batch_size = len(samples)
         self.token_ids_list = [s.token_ids for s in samples]
         self.split_sizes_list = [s.split_sizes for s in samples]
         # + 2 because of bos and eos tokens
-        self.token_ids = pad_idx * torch.ones(batch_size, self.max_splits, self.max_tokens_per_split + 2, dtype=torch.long)
+        self.token_ids = pad_idx * torch.ones(batch_size,
+                                              self.max_tokens_per_sample + 2,
+                                              dtype=torch.long)
+        self.token_ids_chunk = pad_idx * torch.ones(batch_size,
+                                                    self.max_splits,
+                                                    self.max_tokens_per_split + 2,
+                                                    dtype=torch.long)
         for sample_num, sample in enumerate(samples):
+            n_tokens_per_sample = len(sample.token_ids)
+            self.token_ids[sample_num, :n_tokens_per_sample] = torch.tensor(sample.token_ids, dtype=torch.long)
             cursor = 0
             for split_num, split_size in enumerate(sample.split_sizes):
-                tokens = [bos_token_id] + sample.token_ids[cursor: cursor + split_size] + [eos_token_id]
+                chunk_tokens = [bos_token_id] + sample.token_ids[cursor: cursor + split_size] + [eos_token_id]
                 # + 2 because of bos and eos tokens
-                self.token_ids[sample_num, split_num, :split_size + 2] = torch.tensor(tokens, dtype=torch.long)
+                self.token_ids_chunk[sample_num, split_num, :split_size + 2] = torch.tensor(chunk_tokens, dtype=torch.long)
                 cursor += split_size
 
     def __len__(self) -> int:

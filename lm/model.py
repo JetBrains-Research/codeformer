@@ -21,12 +21,12 @@ class CodeformerLM(nn.Module):
 
     def forward(self, batch: BatchedTextTokens) -> dict[str, Tensor]:
         # token_ids.shape = batch_size, max_chunks, max_tokens_per_chunk
-        token_ids = batch.token_ids
-        chunk_att_mask = torch.any(token_ids != self.pad_token_id, 2)
-        batch_size, max_chunks, max_tokens_per_chunk = token_ids.shape
+        token_ids_chunk = batch.token_ids_chunk
+        chunk_att_mask = torch.any(token_ids_chunk != self.pad_token_id, 2)
+        batch_size, max_chunks, max_tokens_per_chunk = token_ids_chunk.shape
 
         # Chunk embeddings
-        token_ids_stacked = token_ids.reshape(batch_size * max_chunks, max_tokens_per_chunk)
+        token_ids_stacked = token_ids_chunk.reshape(batch_size * max_chunks, max_tokens_per_chunk)
         token_att_mask = token_ids_stacked != self.pad_token_id
         token_units = self.encoder_token(input_ids=token_ids_stacked, attention_mask=token_att_mask).last_hidden_state
         hidden_size = token_units.shape[2]
@@ -54,7 +54,7 @@ class CodeformerLM(nn.Module):
                                                             dtype=chunk_units.dtype,
                                                             device=chunk_units.device)
 
-        decoder_token_embs = self.decoder.embeddings(token_ids)
+        decoder_token_embs = self.decoder.embeddings(token_ids_chunk)
         for sample_num in range(batch_size):
             num_chunks = len(batch.split_sizes_list[sample_num])
             for chunk_num in range(num_chunks):
@@ -85,7 +85,7 @@ class CodeformerLM(nn.Module):
 
         logits = torch.einsum('bcth, wh -> bctw', units_for_logits, self.decoder.embeddings.word_embeddings.weight)
         logits = torch.permute(logits, [0, 3, 1, 2])
-        targets = token_ids[:, :, 1:]
+        targets = token_ids_chunk[:, :, 1:]
         # TODO: do not predict stop token for PPX
         loss_tens = torch.nn.functional.cross_entropy(logits, targets, reduction='none', ignore_index=self.pad_token_id)
         num_tokens = torch.count_nonzero(loss_tens)
