@@ -65,8 +65,9 @@ class BatchedTextTokens:
         self.bos_token_id = bos_token_id
         self.eos_token_id = eos_token_id
         for sample_num, sample in enumerate(samples):
-            n_tokens_per_sample = len(sample.token_ids)
-            self.token_ids[sample_num, :n_tokens_per_sample] = torch.tensor(sample.token_ids, dtype=torch.long)
+            n_tokens_per_sample = len(sample.token_ids) + 2
+            sample_token_ids = [self.bos_token_id] + sample.token_ids + [self.eos_token_id]
+            self.token_ids[sample_num, :n_tokens_per_sample] = torch.tensor(sample_token_ids, dtype=torch.long)
             cursor = 0
             for split_num, split_size in enumerate(sample.split_sizes):
                 chunk_tokens = [bos_token_id] + sample.token_ids[cursor: cursor + split_size] + [eos_token_id]
@@ -86,6 +87,10 @@ class BatchedTextTokens:
 
     def to(self, device: torch.DeviceObjType) -> "BatchedTextTokens":
         self.token_ids = self.token_ids.to(device)
+        self.token_ids_chunk = self.token_ids_chunk.to(device)
+        self.att_mask = self.att_mask.to(device)
+        self.att_mask_chunk_tokens = self.att_mask_chunk_tokens.to(device)
+        self.att_mask_chunks = self.att_mask_chunks.to(device)
         return self
 
 

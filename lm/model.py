@@ -4,6 +4,7 @@ from transformers import DebertaV2Model, DebertaV2Tokenizer
 
 from lm.data_utils import BatchedTextTokens
 from lm.deberta_patch import patch_deberta_causal
+from lm.eval_utils import metrics
 
 
 class CodeformerLM(nn.Module):
@@ -84,21 +85,12 @@ class CodeformerLM(nn.Module):
                 num_tokens = batch.split_sizes_list[sample_num][chunk_num]
                 units_for_logits[sample_num, chunk_num, :num_tokens] = decoder_units[sample_num, chunk_num, chunk_num + 1: chunk_num + 1 + num_tokens]
 
-        logits = torch.einsum('bcth, wh -> bctw', units_for_logits, self.decoder.embeddings.word_embeddings.weight)
-        logits = torch.permute(logits, [0, 3, 1, 2])
+        logits = torch.einsum('bcth, wh -> bctw',
+                              units_for_logits,
+                              self.decoder.embeddings.word_embeddings.weight)
+        # logits = torch.permute(logits, [0, 3, 1, 2])
         targets = token_ids_chunk[:, :, 1:]
-        # TODO: do not predict stop token for PPX
-        loss_tens = torch.nn.functional.cross_entropy(logits, targets, reduction='none', ignore_index=self.pad_token_id)
-        num_tokens = torch.count_nonzero(loss_tens)
-        loss = loss_tens.sum() / num_tokens
-        ppl = loss.exp()
-        return {
-            'loss_tens': loss_tens,
-            'loss': loss,
-            'ppl': ppl,
-            'num_tokens': num_tokens,
-            'batch_size': batch_size
-        }
+        return metrics(logits, targets, batch.pad_token_id)
 
     def _get_modules(self, hf_model_name: str) -> dict[str: nn.Module | nn.Parameter | Tensor]:
         deberta_v2_prefix = 'microsoft/deberta-v2'

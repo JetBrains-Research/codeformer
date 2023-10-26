@@ -7,8 +7,8 @@ epochs: 100
 weight_decay: 0.0
 learning_rate: 1e-4
 
-model_name: codeformer
-base_model_name: microsoft/deberta-v3-small
+model_name: gpt2
+base_model_name: null
 batch_size: 128
 micro_batch_size: 4
 name: ???
@@ -21,7 +21,8 @@ use_batch_norm: false
 full_batch_val: true
 
 dataset_name: wikitext2raw
-max_text_tokens: 1048576  # 2 ** 20
+#max_text_tokens: 1048576  # 2 ** 20
+max_text_tokens: 1022 # 2 ** 20
 max_chunk_size: 14
 max_chunks_number: 32
 min_tokens: 1
@@ -32,3 +33,10 @@ prefetch_factor_dl: 32
 
 load_path: null
 #load_path: /mnt/data/shared-data/codeformer/models/rand_init_codeformer.pt
+
+#defaults:
+#  - /wikitext2
+#  - _self_
+#  -
+#model_name: gpt2
+#base_model_name: null

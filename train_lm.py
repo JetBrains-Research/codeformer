@@ -1,41 +1,12 @@
 import hydra
 import torch
-from torch import nn, Tensor
-from torch.utils.data import DataLoader
-from transformers import AutoTokenizer
 from tqdm import tqdm
 import wandb
 
-from lm.model import CodeformerLM
 from lm.data_utils import ThePileDataModule, WikiText2RawDataModule
-from lm.utils import setup_wandb
-
-
-@torch.no_grad()
-def evaluate(model: nn.Module,
-             dl: DataLoader,
-             device: torch.DeviceObjType,
-             split: str) -> dict[str, float]:
-    model.eval()
-    results = []
-    for batch in dl:
-        batch = batch.to(device)
-        outputs = model(batch)
-        results.append(outputs)
-    log_probs_sum = 0
-    total_num_tokens = 0
-    total_loss = 0
-    total_samples = 0
-    for res in results:
-        log_probs_sum = log_probs_sum + res['loss'] * res['num_tokens']
-        total_num_tokens = total_num_tokens + res['num_tokens']
-        total_loss = total_loss + res['loss'] * res['batch_size']
-        total_samples = total_samples + res['batch_size']
-    ppl = torch.exp(log_probs_sum / total_num_tokens)
-    loss = total_loss / total_samples
-    logs = {'ppl': ppl, 'loss': loss}
-    model.train()
-    return {f'{split}_{key}': val.item() for key, val in logs.items()}
+from lm.eval_utils import evaluate
+from lm.utils import setup_wandb, get_tokenizer_from_config, get_model_from_config, get_train_batch_preprocessor, \
+    dict_to_device, get_model_output_postprocessor
 
 
 @hydra.main('configs', 'wikitext2', version_base=None)
@@ -51,7 +22,13 @@ def main(args):
     # num_workers_dl = 0
     # prefetch_factor_dl = None
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    tokenizer = get_tokenizer_from_config(args)
+    print(f'Tokenizer vocab size: {len(tokenizer.vocab)}')
+    device = torch.device('cuda:0')
+    model = get_model_from_config(args).to(device)
+    preprocessor = get_train_batch_preprocessor(args)
+    postprocessor = get_model_output_postprocessor(args)
+
     # dm = ThePileDataModule(args.micro_batch_size, tokenizer, args.max_text_tokens,
     #                        args.max_chunks_number, args.max_chunk_size,
     #                        args.min_tokens, args.min_chunks,
@@ -67,12 +44,10 @@ def main(args):
     dl_valid = dm.val_dataloader()
     dl_test = dm.test_dataloader()
 
-    device = torch.device('cuda:0')
-    model = CodeformerLM(args.model_name).to(device)
     model.train()
     opt = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
-    eval_results = evaluate(model, dl_valid, device, 'val')
+    eval_results = evaluate(model, dl_valid, device, 'val', preprocessor, postprocessor)
     eval_results['epoch'] = 0
     print('Val scores: ', eval_results)
     wandb.log(eval_results)
@@ -83,7 +58,9 @@ def main(args):
     for epoch in range(args.epochs):
         for batch in train_iterator:
             batch = batch.to(device)
-            outputs = model(batch)
+            input_dict = preprocessor(batch, device)
+            outputs = model(**input_dict)
+            outputs = postprocessor(batch, outputs)
             loss = outputs['loss']
             loss.backward()
             losses_micro_batches.append(loss.item())
@@ -95,11 +72,11 @@ def main(args):
                 losses_micro_batches = []
                 wandb.log({'loss': mini_batch_loss})
             processed_batches += 1
-        eval_results = evaluate(model, dl_valid, device, 'val')
+        eval_results = evaluate(model, dl_valid, device, 'val', preprocessor, postprocessor)
         eval_results['epoch'] = epoch + 1
         print('Val scores: ', eval_results)
         wandb.log(eval_results)
-    eval_results = evaluate(model, dl_test, device, 'test')
+    eval_results = evaluate(model, dl_test, device, 'test', preprocessor, postprocessor)
     print('Test scores: ', eval_results)
     wandb.run.summary.update(eval_results)
 

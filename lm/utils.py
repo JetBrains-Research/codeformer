@@ -7,10 +7,13 @@ from torch import nn
 from omegaconf import OmegaConf
 from torch import Tensor, LongTensor
 import wandb
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel, AutoTokenizer, AutoModelWithLMHead, AutoModelForCausalLM
+from transformers.modeling_outputs import BaseModelOutput
 
 from lm.data_utils import (WikiText2RawDataset, WikiText2Dataset,
-                           WikiText103Dataset, WikiText103RawDataset)
+                           WikiText103Dataset, WikiText103RawDataset,
+                           BatchedTextTokens)
+from lm.eval_utils import metrics
 from lm.model import CodeformerLM
 
 WIKITEXT_DATASET_CLASSES =[WikiText2Dataset, WikiText2RawDataset,
@@ -28,13 +31,6 @@ def setup_wandb(args=None):
     wandb.config.update(dict(deepcopy(args)))
     return run
 
-
-def perplexity(logits: Tensor, targets: LongTensor, pad_id: int) -> Tensor:
-    # logits and targets must be compatible with torch.nn.functional.cross_entropy
-    loss_tens = torch.nn.functional.cross_entropy(logits, targets, reduction='none', ignore_index=pad_id)
-    loss = loss_tens.sum() / torch.count_nonzero(loss_tens)
-    ppl = loss.exp()
-    return ppl
 
 
 def dump_wikitext_dataset(dump_dir: str | Path | None = None) -> None:
@@ -73,7 +69,7 @@ def get_model_from_config(config: str | Path | OmegaConf) -> nn.Module:
     if config.model_name == 'codeformer':
         model = CodeformerLM(config.base_model_name)
     else:
-        model = AutoModel.from_pretrained(config.model_name)
+        model = AutoModelForCausalLM.from_pretrained(config.model_name)
     if config.load_path is not None:
         print(f'Loading model from: {config.load_path}')
         model.load_state_dict(torch.load(config.load_path, map_location='cpu'))
@@ -83,4 +79,57 @@ def get_model_from_config(config: str | Path | OmegaConf) -> nn.Module:
 def get_tokenizer_from_config(config: str | Path | OmegaConf) -> nn.Module:
     if isinstance(config, (str, Path)):
         config = OmegaConf.load(config)
-    return AutoTokenizer.from_pretrained(config.base_model_name)
+
+    if config.model_name == 'codeformer':
+        name = config.base_model_name
+    else:
+        name = config.model_name
+    tokenizer = AutoTokenizer.from_pretrained(name)
+    if name == 'gpt2':
+        print('Warning! Populating pad token!')
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+    return tokenizer
+
+
+def get_train_batch_preprocessor(config: str | Path | OmegaConf) -> callable:
+    if isinstance(config, (str, Path)):
+        config = OmegaConf.load(config)
+    if config.model_name == 'codeformer':
+        return lambda batch, device: {'batch': batch.to(device)}
+    else:
+        return train_batch_preprocessor_hf
+
+
+def train_batch_preprocessor_hf(batch: BatchedTextTokens, device: torch.DeviceObjType) -> dict[str, Tensor]:
+    input_dict = {
+        'input_ids': batch.token_ids,
+        'attention_mask': batch.att_mask,
+    }
+    return dict_to_device(input_dict, device)
+
+
+def get_model_output_postprocessor(config: str | Path | OmegaConf) -> callable:
+    if isinstance(config, (str, Path)):
+        config = OmegaConf.load(config)
+    if config.model_name == 'codeformer':
+        return lambda batch, outputs: outputs
+    else:
+        return model_output_postprocessor_hf
+
+
+def model_output_postprocessor_hf(batch: BatchedTextTokens, outputs: BaseModelOutput) -> dict[str, Tensor]:
+    targets = batch.token_ids[:, 1:]
+    logits = outputs.logits[:, :-1].reshape(-1, outputs.logits.shape[2])
+    return metrics(logits, targets, batch.pad_token_id)
+
+
+def dict_to_device(input_dict: dict[str, Tensor | int | float],
+                   device: torch.DeviceObjType) -> dict[str, Tensor | int | float]:
+    on_device_dict = {}
+    for k, v in input_dict.items():
+        if isinstance(v, Tensor):
+            on_device_dict[k] = v.to(device)
+        else:
+            on_device_dict[k] = v
+
+    return on_device_dict
