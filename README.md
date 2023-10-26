@@ -37,7 +37,7 @@ print(config.load_path)
 model = get_model_from_config(config)
 tokenizer = get_tokenizer_from_config(config)
 
-max_new_tokens = 20
+max_new_tokens = 10
 token_ids = tokenizer.encode('The man', return_tensors='pt', add_special_tokens=False)
 pred_ids = model.generate(token_ids, max_new_tokens)
 # If you want to get only predicted text without prefix 
