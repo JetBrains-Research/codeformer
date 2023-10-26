@@ -39,8 +39,8 @@ def dump_wikitext_dataset(dump_dir: str | Path | None = None) -> None:
     max_text_tokens = 2048
     max_chunk_size = 14
     max_chunks_number = 384
-    min_chunks = 8
-    min_tokens = 128
+    min_chunks = 1
+    min_tokens = 1
     tokenizer = None
     ds_to_file_name = {
         WikiText2Dataset: 'wiki-text-2',
