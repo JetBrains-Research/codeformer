@@ -278,7 +278,13 @@ class AllDatasetsDataModule(LightningDataModule):
                                  self.tokenizer.eos_token_id)
 
     def _create_dataset(self, split: str):
-        self.name_to_dataset[self.dataset_name]
+        return self.name_to_dataset[self.dataset_name](split,
+                                                       self.tokenizer,
+                                                       self.max_text_tokens,
+                                                       self.max_chunks_number,
+                                                       self.max_chunk_size,
+                                                       self.min_chunks,
+                                                       self.min_tokens)
 
     def _shared_dataloader(self, split: str) -> DataLoader:
         ds = self._create_dataset(split)
