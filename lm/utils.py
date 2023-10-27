@@ -70,7 +70,7 @@ def get_model_from_config(config: str | Path | OmegaConf) -> nn.Module:
         model = CodeformerLM(config.base_model_name, do_random_init=config.random_init)
     else:
         if config.random_init:
-            model_cfg = AutoConfig(config.model_name)
+            model_cfg = AutoConfig.from_pretrained(config.model_name)
             model = AutoModelForCausalLM.from_config(model_cfg)
         else:
             model = AutoModelForCausalLM.from_pretrained(config.model_name)
