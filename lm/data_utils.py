@@ -8,12 +8,13 @@ from tokenizers import Tokenizer
 import torch
 from torch import Tensor
 from torch.utils.data import DataLoader, IterableDataset, Dataset
-from transformers import AutoTokenizer
+import torch.multiprocessing
 
 from jetnn.data_processing.tree_representation.my_text_tree import MyTextTree
-import torch.multiprocessing
-# To fix "RuntimeError: Too many open files. Communication with the workers is no longer possible"
+
+# This fixes "RuntimeError: Too many open files. Communication with the workers is no longer possible"
 torch.multiprocessing.set_sharing_strategy('file_system')
+
 
 @dataclass
 class TextTokens:
