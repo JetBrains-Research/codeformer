@@ -3,7 +3,7 @@ import torch
 from tqdm import tqdm
 import wandb
 
-from lm.data_utils import ThePileDataModule, WikiText2RawDataModule
+from lm.data_utils import AllDatasetsDataModule
 from lm.eval_utils import evaluate
 from lm.utils import setup_wandb, get_tokenizer_from_config, get_model_from_config, get_train_batch_preprocessor, \
     dict_to_device, get_model_output_postprocessor
@@ -29,15 +29,7 @@ def main(args):
     preprocessor = get_train_batch_preprocessor(args)
     postprocessor = get_model_output_postprocessor(args)
 
-    dm = WikiText2RawDataModule(args.micro_batch_size, tokenizer, args.max_text_tokens,
-                                args.max_chunks_number, args.max_chunk_size,
-                                args.min_tokens, args.min_chunks,
-                                num_workers=args.num_workers_dl,
-                                prefetch_factor=args.prefetch_factor_dl)
-
-    dl_train = dm.train_dataloader()
-    dl_valid = dm.val_dataloader()
-    dl_test = dm.test_dataloader()
+    dl_train, dl_valid, dl_test = AllDatasetsDataModule(**args.data_params).get_dataloaders()
 
     model.train()
     opt = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
