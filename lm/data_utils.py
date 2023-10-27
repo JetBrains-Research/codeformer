@@ -38,9 +38,9 @@ class BatchedTextTokens:
     max_tokens_per_sample: int
     max_splits: int
     token_ids_list: list[list[int]]
-    pad_token_id: str
-    bos_token_id: str
-    eos_token_id: str
+    pad_token_id: int
+    bos_token_id: int
+    eos_token_id: int
     att_mask: Tensor
     att_mask_chunk_tokens: Tensor
     att_mask_chunks: Tensor
