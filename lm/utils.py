@@ -5,7 +5,7 @@ from pathlib import Path
 import torch
 from torch import nn
 from omegaconf import OmegaConf
-from torch import Tensor, LongTensor
+from torch import Tensor
 import wandb
 from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM
 from transformers.modeling_outputs import BaseModelOutput
@@ -30,7 +30,6 @@ def setup_wandb(args=None):
     # Deep copy is really needed here, hydra says
     wandb.config.update(dict(deepcopy(args)))
     return run
-
 
 
 def dump_wikitext_dataset(dump_dir: str | Path | None = None) -> None:
