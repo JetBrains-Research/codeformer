@@ -7,7 +7,7 @@ from torch import nn
 from omegaconf import OmegaConf
 from torch import Tensor, LongTensor
 import wandb
-from transformers import AutoModel, AutoTokenizer, AutoModelWithLMHead, AutoModelForCausalLM
+from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM
 from transformers.modeling_outputs import BaseModelOutput
 
 from lm.data_utils import (WikiText2RawDataset, WikiText2Dataset,
@@ -67,9 +67,13 @@ def get_model_from_config(config: str | Path | OmegaConf) -> nn.Module:
     if isinstance(config, (str, Path)):
         config = OmegaConf.load(config)
     if config.model_name == 'codeformer':
-        model = CodeformerLM(config.base_model_name)
+        model = CodeformerLM(config.base_model_name, do_random_init=config.random_init)
     else:
-        model = AutoModelForCausalLM.from_pretrained(config.model_name)
+        if config.random_init:
+            model_cfg = AutoConfig(config.model_name)
+            model = AutoModelForCausalLM.from_config(model_cfg)
+        else:
+            model = AutoModelForCausalLM.from_pretrained(config.model_name)
     if config.load_path is not None:
         print(f'Loading model from: {config.load_path}')
         model.load_state_dict(torch.load(config.load_path, map_location='cpu'))

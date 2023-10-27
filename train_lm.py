@@ -29,11 +29,6 @@ def main(args):
     preprocessor = get_train_batch_preprocessor(args)
     postprocessor = get_model_output_postprocessor(args)
 
-    # dm = ThePileDataModule(args.micro_batch_size, tokenizer, args.max_text_tokens,
-    #                        args.max_chunks_number, args.max_chunk_size,
-    #                        args.min_tokens, args.min_chunks,
-    #                        num_workers=args.num_workers_dl,
-    #                        prefetch_factor=args.prefetch_factor_dl)
     dm = WikiText2RawDataModule(args.micro_batch_size, tokenizer, args.max_text_tokens,
                                 args.max_chunks_number, args.max_chunk_size,
                                 args.min_tokens, args.min_chunks,

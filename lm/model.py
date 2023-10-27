@@ -1,6 +1,8 @@
+from functools import partial
+
 import torch
 from torch import nn, Tensor, LongTensor
-from transformers import DebertaV2Model, DebertaV2Tokenizer
+from transformers import DebertaV2Model, DebertaV2Tokenizer, AutoConfig
 
 from lm.data_utils import BatchedTextTokens
 from lm.deberta_patch import patch_deberta_causal
@@ -9,10 +11,11 @@ from lm.eval_utils import metrics
 
 class CodeformerLM(nn.Module):
     def __init__(self,
-                 hf_model_name: str) -> None:
+                 hf_model_name: str,
+                 do_random_init: bool) -> None:
         super().__init__()
         # We do not need the token embeddings for the chunk level
-        modules_dict = self._get_modules(hf_model_name)
+        modules_dict = self._get_modules(hf_model_name, do_random_init)
         self.encoder_token = modules_dict['encoder_token']
         self.encoder_chunk = modules_dict['encoder_chunk']
         self.decoder = modules_dict['decoder']
@@ -92,11 +95,15 @@ class CodeformerLM(nn.Module):
         targets = token_ids_chunk[:, :, 1:]
         return metrics(logits, targets, batch.pad_token_id)
 
-    def _get_modules(self, hf_model_name: str) -> dict[str: nn.Module | nn.Parameter | Tensor]:
+    def _get_modules(self, hf_model_name: str, do_random_init: bool) -> dict[str: nn.Module | nn.Parameter | Tensor]:
         deberta_v2_prefix = 'microsoft/deberta-v2'
         deberta_v3_prefix = 'microsoft/deberta-v3'
         if hf_model_name[:len(deberta_v3_prefix)] in {deberta_v2_prefix, deberta_v3_prefix}:
-            model_class = DebertaV2Model
+            if do_random_init:
+                cfg = AutoConfig(hf_model_name)
+                get_model_class = partial(DebertaV2Model.from_config, cfg)
+            else:
+                get_model_class = partial(DebertaV2Model.from_pretrained, hf_model_name)
             tokenizer_class = DebertaV2Tokenizer
             patching_method = patch_deberta_causal
         else:
@@ -104,9 +111,9 @@ class CodeformerLM(nn.Module):
             # supports causal masking out of the box
             patching_method = lambda x: x  # noqa: E731
             raise NotImplementedError
-        encoder_token = model_class.from_pretrained(hf_model_name)
-        encoder_chunk = patching_method(model_class.from_pretrained(hf_model_name))
-        decoder = patching_method(model_class.from_pretrained(hf_model_name))
+        encoder_token = get_model_class()
+        encoder_chunk = patching_method(get_model_class())
+        decoder = patching_method(get_model_class)
         tokenizer = tokenizer_class.from_pretrained(hf_model_name)
 
         encoder_chunk_emb = encoder_chunk.embeddings.word_embeddings.weight[tokenizer.bos_token_id]
