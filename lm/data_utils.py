@@ -250,7 +250,7 @@ class AllDatasetsDataModule(LightningDataModule):
     def __init__(self,
                  dataset_name: str,
                  batch_size: int,
-                 tokenizer_name: str,
+                 tokenizer: Tokenizer,
                  max_text_tokens: int,
                  max_chunks_number: int,
                  max_chunk_size: int,
@@ -262,7 +262,7 @@ class AllDatasetsDataModule(LightningDataModule):
         self.batch_size = batch_size
         assert dataset_name in self.name_to_dataset
         self.dataset_name = dataset_name
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+        self.tokenizer = tokenizer
         self.max_text_tokens = max_text_tokens
         self.max_chunks_number = max_chunks_number
         self.max_chunk_size = max_chunk_size
