@@ -2,7 +2,7 @@ from functools import partial
 
 import torch
 from torch import nn, Tensor, LongTensor
-from transformers import DebertaV2Model, DebertaV2Tokenizer, AutoConfig
+from transformers import DebertaV2Model, DebertaV2Tokenizer, AutoConfig, AutoModel
 
 from lm.data_utils import BatchedTextTokens
 from lm.deberta_patch import patch_deberta_causal
@@ -101,7 +101,7 @@ class CodeformerLM(nn.Module):
         if hf_model_name[:len(deberta_v3_prefix)] in {deberta_v2_prefix, deberta_v3_prefix}:
             if do_random_init:
                 cfg = AutoConfig.from_pretrained(hf_model_name)
-                get_model_class = partial(DebertaV2Model.from_config, cfg)
+                get_model_class = partial(AutoModel.from_config, cfg)
             else:
                 get_model_class = partial(DebertaV2Model.from_pretrained, hf_model_name)
             tokenizer_class = DebertaV2Tokenizer
@@ -113,7 +113,7 @@ class CodeformerLM(nn.Module):
             raise NotImplementedError
         encoder_token = get_model_class()
         encoder_chunk = patching_method(get_model_class())
-        decoder = patching_method(get_model_class)
+        decoder = patching_method(get_model_class())
         tokenizer = tokenizer_class.from_pretrained(hf_model_name)
 
         encoder_chunk_emb = encoder_chunk.embeddings.word_embeddings.weight[tokenizer.bos_token_id]
