@@ -19,8 +19,8 @@ data_params:
   max_chunks_number: 32
   min_tokens: 1
   min_chunks: 1
-  num_workers_dl: 16
-  prefetch_factor_dl: 32
+  num_workers: 8
+  prefetch_factor: 32
   batch_size: 4
 
 model_name: gpt2
