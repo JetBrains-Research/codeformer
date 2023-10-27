@@ -8,6 +8,7 @@ from tokenizers import Tokenizer
 import torch
 from torch import Tensor
 from torch.utils.data import DataLoader, IterableDataset, Dataset
+from transformers import AutoTokenizer
 
 from jetnn.data_processing.tree_representation.my_text_tree import MyTextTree
 
@@ -237,10 +238,19 @@ class WikiText103RawDataset(WikiTextDatasetBase):
     _dataset_names = ['wikitext', 'wikitext-103-raw-v1']
 
 
-class DataModuleBase(LightningDataModule, ABC):
+class AllDatasetsDataModule(LightningDataModule):
+    name_to_dataset = {
+        'wikitext2': WikiText2Dataset,
+        'wikitext2raw': WikiText2RawDataset,
+        'wikitext103': WikiText103Dataset,
+        'wikitext103raw': WikiText103RawDataset,
+        'the_pile': ThePileDataset
+    }
+
     def __init__(self,
+                 dataset_name: str,
                  batch_size: int,
-                 tokenizer: Tokenizer,
+                 tokenizer_name: str,
                  max_text_tokens: int,
                  max_chunks_number: int,
                  max_chunk_size: int,
@@ -250,7 +260,9 @@ class DataModuleBase(LightningDataModule, ABC):
                  prefetch_factor: int = 8) -> None:
         super().__init__()
         self.batch_size = batch_size
-        self.tokenizer = tokenizer
+        assert dataset_name in self.name_to_dataset
+        self.dataset_name = dataset_name
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
         self.max_text_tokens = max_text_tokens
         self.max_chunks_number = max_chunks_number
         self.max_chunk_size = max_chunk_size
@@ -264,9 +276,9 @@ class DataModuleBase(LightningDataModule, ABC):
                                  self.tokenizer.pad_token_id,
                                  self.tokenizer.bos_token_id,
                                  self.tokenizer.eos_token_id)
-    @abstractmethod
+
     def _create_dataset(self, split: str):
-        ...
+        self.name_to_dataset[self.dataset_name]
 
     def _shared_dataloader(self, split: str) -> DataLoader:
         ds = self._create_dataset(split)
@@ -297,35 +309,5 @@ class DataModuleBase(LightningDataModule, ABC):
         batch.move_to_device(device)
         return batch
 
-
-class ThePileDataModule(DataModuleBase):
-    def _create_dataset(self, split: str):
-        return ThePileDataset(split,
-                              self.tokenizer,
-                              self.max_text_tokens,
-                              self.max_chunks_number,
-                              self.max_chunk_size,
-                              self.min_chunks,
-                              self.min_tokens)
-
-
-class WikiText2RawDataModule(DataModuleBase):
-    def _create_dataset(self, split: str):
-        return WikiText2RawDataset(split,
-                                   self.tokenizer,
-                                   self.max_text_tokens,
-                                   self.max_chunks_number,
-                                   self.max_chunk_size,
-                                   self.min_chunks,
-                                   self.min_tokens)
-
-
-class WikiText2DataModule(DataModuleBase):
-    def _create_dataset(self, split: str):
-        return WikiText2Dataset(split,
-                                self.tokenizer,
-                                self.max_text_tokens,
-                                self.max_chunks_number,
-                                self.max_chunk_size,
-                                self.min_chunks,
-                                self.min_tokens)
+    def get_dataloaders(self):
+        return self.train_dataloader(), self.val_dataloader(), self.test_dataloader()
