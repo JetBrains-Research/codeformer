@@ -14,8 +14,8 @@ def main(args):
     print(args)
 
     setup_wandb(args)
-    assert args.batch_size % args.micro_batch_size == 0
-    accumulation_factor = args.batch_size // args.micro_batch_size
+    assert args.accumulated_batch_size % args.data_params.batch_size == 0
+    accumulation_factor = args.accumulated_batch_size // args.data_params.batch_size
 
     # TODO: write parameters gathering for weight_decay
     assert args.weight_decay == 0.0
