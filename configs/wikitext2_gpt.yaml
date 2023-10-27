@@ -14,7 +14,6 @@ accumulated_batch_size: 128
 #max_text_tokens: 1048576  # 2 ** 20
 data_params:
   dataset_name: wikitext2raw
-  tokenizer_name:
   max_text_tokens: 1022
   max_chunk_size: 14
   max_chunks_number: 32

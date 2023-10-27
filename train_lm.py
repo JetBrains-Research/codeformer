@@ -19,8 +19,6 @@ def main(args):
 
     # TODO: write parameters gathering for weight_decay
     assert args.weight_decay == 0.0
-    # num_workers_dl = 0
-    # prefetch_factor_dl = None
 
     tokenizer = get_tokenizer_from_config(args)
     print(f'Tokenizer vocab size: {len(tokenizer.vocab)}')
@@ -29,7 +27,7 @@ def main(args):
     preprocessor = get_train_batch_preprocessor(args)
     postprocessor = get_model_output_postprocessor(args)
 
-    dl_train, dl_valid, dl_test = AllDatasetsDataModule(**args.data_params).get_dataloaders()
+    dl_train, dl_valid, dl_test = AllDatasetsDataModule(tokenizer=tokenizer, **args.data_params).get_dataloaders()
 
     model.train()
     opt = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
