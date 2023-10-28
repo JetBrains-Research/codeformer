@@ -5,8 +5,10 @@ import wandb
 
 from lm.data_utils import AllDatasetsDataModule
 from lm.eval_utils import evaluate
-from lm.utils import setup_wandb, get_tokenizer_from_config, get_model_from_config, get_train_batch_preprocessor, \
-    dict_to_device, get_model_output_postprocessor
+from lm.utils import (setup_wandb, get_tokenizer_from_config,
+                      get_train_batch_preprocessor,
+                      get_model_output_postprocessor,
+                      get_model_from_config)
 
 
 @hydra.main('configs', 'wikitext2', version_base=None)
