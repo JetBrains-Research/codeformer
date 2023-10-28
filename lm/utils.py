@@ -60,25 +60,6 @@ def dump_wikitext_dataset(dump_dir: str | Path | None = None) -> None:
                     fp.write(json.dumps({'text': sample}) + '\n')
 
 
-def get_model_from_config(config: str | Path | OmegaConf) -> nn.Module:
-    # config: either a path to a YAML file or an OmegaConf constructed
-    # from the YAML
-    if isinstance(config, (str, Path)):
-        config = OmegaConf.load(config)
-    if config.model_name == 'codeformer':
-        model = CodeformerLM(config.base_model_name, do_random_init=config.random_init)
-    else:
-        if config.random_init:
-            model_cfg = AutoConfig.from_pretrained(config.model_name)
-            model = AutoModelForCausalLM.from_config(model_cfg)
-        else:
-            model = AutoModelForCausalLM.from_pretrained(config.model_name)
-    if config.load_path is not None:
-        print(f'Loading model from: {config.load_path}')
-        model.load_state_dict(torch.load(config.load_path, map_location='cpu'))
-    return model
-
-
 def get_tokenizer_from_config(config: str | Path | OmegaConf) -> nn.Module:
     if isinstance(config, (str, Path)):
         config = OmegaConf.load(config)
@@ -136,3 +117,35 @@ def dict_to_device(input_dict: dict[str, Tensor | int | float],
             on_device_dict[k] = v
 
     return on_device_dict
+
+
+def get_model_from_config(config: str | Path | OmegaConf) -> nn.Module:
+    # config: either a path to a YAML file or an OmegaConf constructed
+    # from the YAML
+    if isinstance(config, (str, Path)):
+        config = OmegaConf.load(config)
+    if config.model_name == 'codeformer':
+        from lm.model import CodeformerLM
+        model = CodeformerLM(config.base_model_name, do_random_init=config.random_init)
+    else:
+        if config.random_init:
+            model_cfg = AutoConfig.from_pretrained(config.model_name)
+            model = AutoModelForCausalLM.from_config(model_cfg)
+        else:
+            model = AutoModelForCausalLM.from_pretrained(config.model_name)
+    if config.load_path is not None:
+        print(f'Loading model from: {config.load_path}')
+        model.load_state_dict(torch.load(config.load_path, map_location='cpu'))
+    return model
+
+
+def get_model_module(model: PreTrainedModel) -> PreTrainedModel:
+    children = list(model.children())
+    is_pretrained_model = [isinstance(child, PreTrainedModel) for child in children]
+    if any(is_pretrained_model):
+        assert sum(is_pretrained_model) == 1
+        return next(child for child, is_pret in zip(children, is_pretrained_model) if is_pret)
+    else:
+        return model
+
+
