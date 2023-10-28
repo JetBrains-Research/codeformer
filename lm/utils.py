@@ -7,14 +7,13 @@ from torch import nn
 from omegaconf import OmegaConf
 from torch import Tensor
 import wandb
-from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoConfig, AutoModelForCausalLM, PreTrainedModel
 from transformers.modeling_outputs import BaseModelOutput
 
 from lm.data_utils import (WikiText2RawDataset, WikiText2Dataset,
                            WikiText103Dataset, WikiText103RawDataset,
                            BatchedTextTokens)
 from lm.eval_utils import metrics
-from lm.model import CodeformerLM
 
 WIKITEXT_DATASET_CLASSES =[WikiText2Dataset, WikiText2RawDataset,
                            WikiText103Dataset, WikiText103RawDataset]
