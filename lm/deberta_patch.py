@@ -1,13 +1,16 @@
 from types import MethodType
 
 import torch
-from transformers import DebertaV2Model
+from transformers import DebertaV2Model, DebertaV2ForMaskedLM
+
+from lm.utils import get_model_module
 
 
-def patch_deberta_causal(model: DebertaV2Model) -> DebertaV2Model:
-    if getattr(model.encoder, '_get_attention_mask_non_casual', None) is not None:
+def patch_deberta_causal(model: DebertaV2Model | DebertaV2ForMaskedLM) -> DebertaV2Model:
+    model_module = get_model_module(model)
+    if getattr(model_module.encoder, '_get_attention_mask_non_casual', None) is not None:
         raise RuntimeError('Trying to make model casual second time!')
-    model.encoder._get_attention_mask_non_casual = model.encoder.get_attention_mask
+    model_module.encoder._get_attention_mask_non_casual = model_module.encoder.get_attention_mask
 
     def get_attention_mask(self, attention_mask):
         attention_mask = self._get_attention_mask_non_casual(attention_mask)
@@ -16,5 +19,5 @@ def patch_deberta_causal(model: DebertaV2Model) -> DebertaV2Model:
         attention_mask = attention_mask * torch.tril(causal_mask)
         return attention_mask
 
-    model.encoder.get_attention_mask = MethodType(get_attention_mask, model.encoder)
+    model_module.encoder.get_attention_mask = MethodType(get_attention_mask, model_module.encoder)
     return model

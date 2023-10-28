@@ -2,11 +2,13 @@ from functools import partial
 
 import torch
 from torch import nn, Tensor, LongTensor
-from transformers import DebertaV2Model, DebertaV2Tokenizer, AutoConfig, AutoModel
+from transformers import (DebertaV2Model, DebertaV2Tokenizer,
+                          AutoConfig, AutoModel, AutoModelForMaskedLM)
 
 from lm.data_utils import BatchedTextTokens
 from lm.deberta_patch import patch_deberta_causal
 from lm.eval_utils import metrics
+from lm.utils import get_model_module
 
 
 class CodeformerLM(nn.Module):
@@ -59,7 +61,7 @@ class CodeformerLM(nn.Module):
                                                             dtype=chunk_units.dtype,
                                                             device=chunk_units.device)
 
-        decoder_token_embs = self.decoder.embeddings(token_ids_chunk)
+        decoder_token_embs = get_model_module(self.decoder).embeddings(token_ids_chunk)
         for sample_num in range(batch_size):
             num_chunks = len(batch.split_sizes_list[sample_num])
             for chunk_num in range(num_chunks):
@@ -72,25 +74,23 @@ class CodeformerLM(nn.Module):
         decoder_input_embs = decoder_input_embs.reshape(
             batch_size * max_chunks, max_chunks + max_tokens_per_chunk, hidden_size
         )
-        decoder_units = self.decoder(inputs_embeds=decoder_input_embs).last_hidden_state
-        decoder_units = decoder_units.reshape(batch_size, max_chunks, max_chunks + max_tokens_per_chunk, hidden_size)
+        logits_stacked = self.decoder(inputs_embeds=decoder_input_embs).logits
+        vocab_size = logits_stacked.shape[2]
+        logits_stacked = logits_stacked.reshape(batch_size, max_chunks, max_chunks + max_tokens_per_chunk, vocab_size)
 
         # Logits
 
         # do not predict bos and predict eos
-        logits_shape = [batch_size, max_chunks, max_tokens_per_chunk - 1, hidden_size]
-        units_for_logits = torch.zeros(*logits_shape,
-                                       device=decoder_units.device,
-                                       dtype=decoder_units.dtype)
+        logits_shape = [batch_size, max_chunks, max_tokens_per_chunk - 1, vocab_size]
+        logits = torch.zeros(*logits_shape,
+                             device=logits_stacked.device,
+                             dtype=logits_stacked.dtype)
         for sample_num in range(batch_size):
             num_chunks = len(batch.split_sizes_list[sample_num])
             for chunk_num in range(num_chunks):
                 num_tokens = batch.split_sizes_list[sample_num][chunk_num]
-                units_for_logits[sample_num, chunk_num, :num_tokens] = decoder_units[sample_num, chunk_num, chunk_num + 1: chunk_num + 1 + num_tokens]
-
-        logits = torch.einsum('bcth, wh -> bctw',
-                              units_for_logits,
-                              self.decoder.embeddings.word_embeddings.weight)
+                curr_logits = logits_stacked[sample_num, chunk_num, chunk_num + 1: chunk_num + 1 + num_tokens]
+                logits[sample_num, chunk_num, :num_tokens] = curr_logits
         # logits = torch.permute(logits, [0, 3, 1, 2])
         targets = token_ids_chunk[:, :, 1:]
         return metrics(logits, targets, batch.pad_token_id)
@@ -102,8 +102,10 @@ class CodeformerLM(nn.Module):
             if do_random_init:
                 cfg = AutoConfig.from_pretrained(hf_model_name)
                 get_model_class = partial(AutoModel.from_config, cfg)
+                get_model_class_with_lm_head = partial(AutoModelForMaskedLM.from_config, cfg)
             else:
                 get_model_class = partial(DebertaV2Model.from_pretrained, hf_model_name)
+                get_model_class_with_lm_head = partial(AutoModelForMaskedLM.from_pretrained, hf_model_name)
             tokenizer_class = DebertaV2Tokenizer
             patching_method = patch_deberta_causal
         else:
@@ -113,10 +115,11 @@ class CodeformerLM(nn.Module):
             raise NotImplementedError
         encoder_token = get_model_class()
         encoder_chunk = patching_method(get_model_class())
-        decoder = patching_method(get_model_class())
+        decoder = get_model_class_with_lm_head()
+        decoder = patching_method(decoder)
         tokenizer = tokenizer_class.from_pretrained(hf_model_name)
 
-        encoder_chunk_emb = encoder_chunk.embeddings.word_embeddings.weight[tokenizer.bos_token_id]
+        encoder_chunk_emb = get_model_module(encoder_chunk).embeddings.word_embeddings.weight[tokenizer.bos_token_id]
         chunk_sos_embedding = nn.Parameter(encoder_chunk_emb)
 
         encoder_chunk.embeddings.word_embeddings = nn.Identity()
