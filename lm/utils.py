@@ -7,6 +7,7 @@ from torch import nn
 from omegaconf import OmegaConf
 from torch import Tensor
 import wandb
+from tokenizers import Tokenizer
 from transformers import AutoTokenizer, AutoConfig, AutoModelForCausalLM, PreTrainedModel
 from transformers.modeling_outputs import BaseModelOutput
 
