@@ -29,8 +29,6 @@ def test_deberta_causal_reinit():
     pretrained_embs = model.deberta.embeddings.word_embeddings.weight.detach().clone()
     for module in model.modules():
         model._init_weights(module)
-    # # model._init_weights(model)
-    # model.init_weights()
 
     reinited_weights = model.deberta.embeddings.word_embeddings.weight
     assert torch.all(pretrained_embs != reinited_weights)
