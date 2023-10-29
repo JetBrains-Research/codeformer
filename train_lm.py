@@ -39,10 +39,10 @@ def main(args):
     print('Val scores: ', eval_results)
     wandb.log(eval_results)
 
-    train_iterator = tqdm(dl_train)
     processed_batches = 0
     losses_micro_batches = []
     for epoch in range(args.epochs):
+        train_iterator = tqdm(dl_train, mininterval=10)
         for batch in train_iterator:
             batch = batch.to(device)
             input_dict = preprocessor(batch, device)
