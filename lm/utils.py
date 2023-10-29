@@ -59,7 +59,7 @@ def dump_wikitext_dataset(dump_dir: str | Path | None = None) -> None:
                     fp.write(json.dumps({'text': sample}) + '\n')
 
 
-def get_tokenizer_from_config(config: str | Path | OmegaConf) -> nn.Module:
+def get_tokenizer_from_config(config: str | Path | OmegaConf) -> Tokenizer:
     if isinstance(config, (str, Path)):
         config = OmegaConf.load(config)
 
@@ -127,14 +127,16 @@ def get_model_from_config(config: str | Path | OmegaConf) -> nn.Module:
         from lm.model import CodeformerLM
         model = CodeformerLM(config.base_model_name, do_random_init=config.random_init)
     else:
-        if config.random_init:
-            model_cfg = AutoConfig.from_pretrained(config.model_name)
-            model = AutoModelForCausalLM.from_config(model_cfg)
+        if config.model_name == 'deberta_causal':
+            from lm.model import PatchedDebertaAsCausalLM
+            model = PatchedDebertaAsCausalLM.from_pretrained(config.base_model_name)
         else:
             model = AutoModelForCausalLM.from_pretrained(config.model_name)
-    if config.load_path is not None:
-        print(f'Loading model from: {config.load_path}')
-        model.load_state_dict(torch.load(config.load_path, map_location='cpu'))
+            if config.load_path is not None:
+                print(f'Loading model from: {config.load_path}')
+                model.load_state_dict(torch.load(config.load_path, map_location='cpu'))
+        for module in model.modules():
+            model._init_weights(module)
     return model
 
 
