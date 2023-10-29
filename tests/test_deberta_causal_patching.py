@@ -42,24 +42,9 @@ def test_causal_patching_deberta():
     # device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     device = torch.device('cpu')
     model = DebertaV2Model.from_pretrained('microsoft/deberta-v3-base').to(device)
-    batch_size = 2
-    seq_len = 4
-    hidden_size = model.config.hidden_size
-    embs = torch.randn(batch_size, seq_len, hidden_size, device=device)
-    att_mask = torch.ones(batch_size, seq_len, device=device)
-    att_mask[0, 2:] = 0.0
-
-    def frw(x):
-        return model.forward(inputs_embeds=x, attention_mask=att_mask).last_hidden_state.sum(2)
-
-    regular_jacob = torch.autograd.functional.jacobian(frw, (embs,))[0]
-
+    regular_jacob = get_test_case_jacob(model, device)
     model = patch_deberta_causal(model)
-
-    def frw(x):
-        return model.forward(inputs_embeds=x, attention_mask=att_mask).last_hidden_state.sum(2)
-
-    patch_jacob = torch.autograd.functional.jacobian(frw, (embs,))[0]
+    patch_jacob = get_test_case_jacob(model, device)
 
     expected_jac = ExpectedJacobians()
 
@@ -76,6 +61,15 @@ def test_causal_patching_deberta():
 def test_causal_patching_deberta_stand_alone_class():
     device = torch.device('cpu')
     model = PatchedDebertaAsCausalLM.from_pretrained('microsoft/deberta-v3-base')
+    patch_jacob = get_test_case_jacob(model, device)
+    expected_jac = ExpectedJacobians()
+    p_jac_0 = patch_jacob.abs().sum(-1).bool().long()[0, :, 0, :]
+    p_jac_1 = patch_jacob.abs().sum(-1).bool().long()[1, :, 1, :]
+    assert torch.all(p_jac_0 == expected_jac.patch_jacob_sample_0)
+    assert torch.all(p_jac_1 == expected_jac.patch_jacob_sample_1)
+
+
+def get_test_case_jacob(model, device):
     batch_size = 2
     seq_len = 4
     hidden_size = model.config.hidden_size
@@ -86,11 +80,5 @@ def test_causal_patching_deberta_stand_alone_class():
     def frw(x):
         return model.forward(inputs_embeds=x, attention_mask=att_mask).logits.sum(2)
 
-    patch_jacob = torch.autograd.functional.jacobian(frw, (embs,))[0]
-
-    expected_jac = ExpectedJacobians()
-
-    p_jac_0 = patch_jacob.abs().sum(-1).bool().long()[0, :, 0, :]
-    p_jac_1 = patch_jacob.abs().sum(-1).bool().long()[1, :, 1, :]
-    assert torch.all(p_jac_0 == expected_jac.patch_jacob_sample_0)
-    assert torch.all(p_jac_1 == expected_jac.patch_jacob_sample_1)
+    jacob = torch.autograd.functional.jacobian(frw, (embs,))[0]
+    return jacob
