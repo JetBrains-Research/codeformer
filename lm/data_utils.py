@@ -260,7 +260,7 @@ class AllDatasetsDataModule(LightningDataModule):
                  min_tokens: int = 1,
                  min_chunks: int = 1,
                  num_workers: int = 16,
-                 prefetch_factor: int = 8) -> None:
+                 prefetch_factor: int | None = 8) -> None:
         super().__init__()
         self.batch_size = batch_size
         assert dataset_name in self.name_to_dataset
