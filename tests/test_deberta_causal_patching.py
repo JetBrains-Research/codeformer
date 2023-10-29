@@ -78,7 +78,11 @@ def get_test_case_jacob(model, device):
     att_mask[0, 2:] = 0.0
 
     def frw(x):
-        return model.forward(inputs_embeds=x, attention_mask=att_mask).logits.sum(2)
+        output = model.forward(inputs_embeds=x, attention_mask=att_mask)
+        if hasattr(output, 'logits'):
+            return output.logits.sum(2)
+        else:
+            return output.last_hidden_state.sum(2)
 
     jacob = torch.autograd.functional.jacobian(frw, (embs,))[0]
     return jacob
