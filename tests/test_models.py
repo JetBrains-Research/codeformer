@@ -2,7 +2,7 @@ import torch
 from transformers import AutoTokenizer
 import pytest
 
-from lm.model import CodeformerLM
+from lm.model import CodeformerLM, PatchedDebertaAsCausalLM
 from lm.data_utils import AllDatasetsDataModule
 
 from consts import (MAX_TEXT_TOKENS, MAX_CHUNKS_NUMBER, MAX_CHUNK_SIZE,
@@ -22,3 +22,15 @@ def test_codeformer(rnd_init):
     batch = next(iter(dl))
     batch = batch.to(device)
     outputs = model(batch)
+
+
+def test_deberta_causal_reinit():
+    model = PatchedDebertaAsCausalLM.from_pretrained(DEFAULT_BASE_MODEL_NAME)
+    pretrained_embs = model.deberta.embeddings.word_embeddings.weight.detach().clone()
+    for module in model.modules():
+        model._init_weights(module)
+    # # model._init_weights(model)
+    # model.init_weights()
+
+    reinited_weights = model.deberta.embeddings.word_embeddings.weight
+    assert torch.all(pretrained_embs != reinited_weights)
