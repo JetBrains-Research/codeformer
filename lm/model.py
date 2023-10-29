@@ -2,13 +2,15 @@ from functools import partial
 
 import torch
 from torch import nn, Tensor, LongTensor
-from transformers import (DebertaV2Model, DebertaV2Tokenizer,
+from transformers import (DebertaV2Model, DebertaV2ForMaskedLM, DebertaV2Tokenizer,
                           AutoConfig, AutoModel, AutoModelForMaskedLM)
 
 from lm.data_utils import BatchedTextTokens
 from lm.deberta_patch import patch_deberta_causal
 from lm.eval_utils import metrics
 from lm.utils import get_model_module
+
+__all__ = ['CodeformerLM', 'PatchedDebertaAsCausalLM']
 
 
 class CodeformerLM(nn.Module):
@@ -139,6 +141,12 @@ class CodeformerLM(nn.Module):
         min_tok_idx = 1000
         max_tok_idx = self.decoder.embeddings.word_embeddings.weight.shape[0]
         return torch.cat([input_ids, torch.randint(min_tok_idx, max_tok_idx, [1, num_predicted_tokens])], dim=1)
+
+
+class PatchedDebertaAsCausalLM(DebertaV2ForMaskedLM):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        patch_deberta_causal(self)
 
 
 # TODO: attempt to make everything in pure torch without loops
