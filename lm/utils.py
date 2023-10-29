@@ -64,7 +64,7 @@ def get_tokenizer_from_config(config: str | Path | OmegaConf) -> Tokenizer:
     if isinstance(config, (str, Path)):
         config = OmegaConf.load(config)
 
-    if config.model_name == 'codeformer':
+    if config.model_name in {'codeformer', 'deberta_causal'}:
         name = config.base_model_name
     else:
         name = config.model_name
