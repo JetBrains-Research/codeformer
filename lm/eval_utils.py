@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 @torch.no_grad()
 def evaluate(model: nn.Module,
              dl: DataLoader,
-             device: torch.DeviceObjType,
+             device: torch.device,
              split: str,
              preprocessor: callable,
              postprocessor: callable) -> dict[str, float]:
