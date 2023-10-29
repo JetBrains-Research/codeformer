@@ -1,4 +1,5 @@
 TEST_TOKENIZER_NAME = 'microsoft/deberta-v3-base'
+DEFAULT_BASE_MODEL_NAME = 'microsoft/deberta-v3-base'
 DEFAULT_DATASET_NAME = 'wikitext2raw'
 
 MAX_TEXT_TOKENS = 2048

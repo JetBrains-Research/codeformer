@@ -8,8 +8,7 @@ from consts import (WIKITEXT_SPLITS, MAX_TEXT_TOKENS,
                     MAX_CHUNKS_NUMBER, MAX_CHUNK_SIZE,
                     MIN_TOKENS, MIN_CHUNKS,
                     TEST_TOKENIZER_NAME, BATCH_SIZE)
-from lm.data_utils import (WikiText2DataModule,
-                           ThePileDataModule,
+from lm.data_utils import (AllDatasetsDataModule,
                            WikiTextDatasetBase)
 from lm.utils import WIKITEXT_DATASET_CLASSES
 
@@ -27,18 +26,18 @@ def test_wikitext_datasets(ds_class: WikiTextDatasetBase, split: str):
 
 def test_wikitext_data_module():
     tokenizer = AutoTokenizer.from_pretrained(TEST_TOKENIZER_NAME)
-    dm = WikiText2DataModule(BATCH_SIZE, tokenizer, MAX_TEXT_TOKENS,
-                             MAX_CHUNKS_NUMBER, MAX_CHUNK_SIZE, MIN_TOKENS,
-                             MIN_CHUNKS, num_workers=0, prefetch_factor=None)
+    dm = AllDatasetsDataModule(BATCH_SIZE, tokenizer, MAX_TEXT_TOKENS,
+                               MAX_CHUNKS_NUMBER, MAX_CHUNK_SIZE, MIN_TOKENS,
+                               MIN_CHUNKS, num_workers=0, prefetch_factor=None)
     train_dl = dm.train_dataloader()
     batch = next(iter(train_dl))
 
 
 def test_the_pile_data_module():
     tokenizer = AutoTokenizer.from_pretrained(TEST_TOKENIZER_NAME)
-    dm = ThePileDataModule(BATCH_SIZE, tokenizer, MAX_TEXT_TOKENS,
-                           MAX_CHUNKS_NUMBER, MAX_CHUNK_SIZE, MIN_TOKENS,
-                           MIN_CHUNKS, num_workers=0, prefetch_factor=None)
+    dm = AllDatasetsDataModule('the_pile', BATCH_SIZE, tokenizer, MAX_TEXT_TOKENS,
+                               MAX_CHUNKS_NUMBER, MAX_CHUNK_SIZE, MIN_TOKENS,
+                               MIN_CHUNKS, num_workers=0, prefetch_factor=None)
     train_dl = dm.train_dataloader()
     batch = next(iter(train_dl))
     # TODO: add tensor checks
