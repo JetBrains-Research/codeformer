@@ -56,8 +56,7 @@ class BatchedTextTokens:
         self.max_splits = max(s.num_splits for s in samples)
         batch_size = len(samples)
         self.token_ids_list = [s.token_ids for s in samples]
-        self.split_sizes_list = [s.split_sizes for s in samples]
-        # + 2 because of bos and eos tokens
+        # self.split_sizes_list = [s.split_sizes for s in samples]
         self.token_ids = pad_token_id * torch.ones(batch_size,
                                                    self.max_tokens_per_sample,
                                                    dtype=torch.long)
@@ -81,6 +80,10 @@ class BatchedTextTokens:
         self.att_mask = (self.token_ids != torch.scalar_tensor(self.pad_token_id)).float()
         self.att_mask_chunk_tokens = (self.token_ids_chunk != torch.scalar_tensor(self.pad_token_id)).float()
         self.att_mask_chunks = torch.any(self.token_ids_chunk != self.pad_token_id, 2)
+
+        self.split_sizes_list = []
+        for s in samples:
+            self.split_sizes_list.append([split_size + 2 for split_size in s.split_sizes])
 
     def __len__(self) -> int:
         return len(self.token_ids_list)
