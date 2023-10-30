@@ -56,7 +56,7 @@ class CodeformerLM(nn.Module):
         chunk_units_sos = torch.cat([chunk_sos_emb, chunk_units[:, :-1]], 1)
 
         # Decoder
-        decoder_input_embs = torch.full([batch_size,
+        decoder_input_embs = torch.zeros(batch_size,
                                          max_chunks,
                                          max_chunks + max_tokens_per_chunk,
                                          hidden_size],
