@@ -39,6 +39,7 @@ def generate_batches_from_splits_without_last_chunk(
         device: str="cuda",
     ) -> torch.Tensor:
         splits_length = (splits_size != pad_id).count_nonzero(dim=1)
+        # print("splits_length", splits_length)
         num_batches = splits_size.size()[0]
         num_splits = torch.sum(splits_length).item() - num_batches
         result = torch.zeros((num_splits, context_size), dtype=torch.long).to(device)
@@ -56,7 +57,7 @@ def generate_batches_from_splits_without_last_chunk(
                 ]
                 p_sum += current_split_size
                 result_idx += 1
-            last_split_size = current_split[split_idx]
+            last_split_size = current_split[splits_length[batch_idx].item() - 1]
             last_chunks[batch_idx][:last_split_size] = input_ids[batch_idx][p_sum : p_sum + last_split_size]
         return result, last_chunks
 
@@ -66,15 +67,89 @@ def pad_to_match_linear_layer(
         split_sizes: torch.Tensor,
         context_size: int,
         device: str="cuda",
+        last_chunk_omitted: bool=False
     ) -> torch.Tensor:
+        shift = int(last_chunk_omitted)
         batch_split = split_sizes.count_nonzero(dim=1)
-        max_splits = torch.max(batch_split).item()
+        max_split = torch.max(batch_split).item() - shift
         num_splits = batch_split.size()[0]
         result = torch.zeros(
-            (num_splits, max_splits, context_size, x.shape[2])
+            (num_splits, max_split, context_size, x.shape[2]),
+            dtype=torch.float,
         ).to(device)
         p_sum = 0
         for i, split in enumerate(batch_split):
-            result[i][:split, : x.shape[1]] = x[p_sum : p_sum + split]
-            p_sum += split
+            split_size = split - shift
+            result[i][:split_size, : x.shape[1]] = x[p_sum : p_sum + split_size]
+            p_sum += split_size
         return result
+
+
+def generate_attention_mask(
+        split_sizes: torch.Tensor,
+        device: str="cuda",
+) -> torch.Tensor:
+        batch_split = split_sizes.count_nonzero(dim=1)
+        max_split = torch.max(batch_split).item()
+        num_splits = batch_split.size()[0]
+        result = torch.zeros(
+            (num_splits, max_split),
+            dtype=torch.long,
+        ).to(device)
+        for i, split in enumerate(batch_split):
+            result[i][:split] = 1 # think about +1
+        return result
+
+
+def concat_with_bos_embeddings(
+        x: torch.Tensor,
+        bos_embedding: torch.Tensor,
+    ) -> torch.Tensor:
+        num_batches = x.size()[0]
+        bos_embeddings = bos_embedding.repeat(num_batches, 1)
+        bos_embeddings = torch.unsqueeze(bos_embeddings, 1)
+        return torch.cat((bos_embeddings, x), dim=1)
+
+
+# think about adding eos tokens for chunks
+def generate_context_for_last_decoder(
+        input_ids: torch.Tensor,
+        input_embeddings: torch.Tensor,
+        chunk_representations: torch.Tensor,
+        splits_size: torch.Tensor,
+        pad_id: int,
+        device: str="cuda",
+    ):
+    splits_length = [split_size - 1 for split_size in (splits_size != pad_id).count_nonzero(dim=1)]
+    num_batches = chunk_representations.size()[0]
+    p_sum = 0
+    # print("input_ids", input_ids.size())
+    result = torch.zeros((input_embeddings.size()[0], input_embeddings.size()[1] + 1, input_embeddings.size()[2]), dtype=torch.float).to(device)
+    labels = torch.zeros((input_embeddings.size()[0], input_embeddings.size()[1] + 1), dtype=torch.long).to(device)
+    # print("result", result.size())
+    for batch_num in range(num_batches):
+        split_size = splits_length[batch_num]
+        
+        labels[p_sum: p_sum + split_size, 1:] = input_ids[p_sum: p_sum + split_size]
+        batch_input_embeddings = input_embeddings[p_sum: p_sum + split_size]
+        batch_chunk_representations = chunk_representations[batch_num][:split_size]
+
+        # shifted_batch_embeddings_representations = torch.zeros(batch_input_embeddings.size(), dtype=torch.float).to(device)
+        # shifted_batch_embeddings_representations[1: split_size] = batch_input_embeddings[:split_size - 1]
+
+        shifted_batch_chunk_representations = torch.zeros(batch_chunk_representations.size(), dtype=torch.float).to(device)
+        shifted_batch_chunk_representations[1: split_size] = batch_chunk_representations[:split_size - 1]
+        shifted_batch_chunk_representations = shifted_batch_chunk_representations.unsqueeze(dim=1)
+        
+        # print("batch_input_embeddings", batch_input_embeddings.size())
+        # print("shifted_batch_embeddings_representations", shifted_batch_embeddings_representations.size())
+        # print("shifted_batch_chunk_representations", shifted_batch_chunk_representations.size())
+        result[p_sum: p_sum + split_size] = torch.cat((shifted_batch_chunk_representations, batch_input_embeddings), dim=1)
+        # print("result", result[p_sum: p_sum + split_size].size())
+        p_sum += split_size
+    
+    return result, labels, None, None
+
+
+def generate_labels_mask_for_last_decoder() -> torch.Tensor:
+    pass

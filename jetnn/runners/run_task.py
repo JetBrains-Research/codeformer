@@ -77,15 +77,33 @@ def train(config: DictConfig, task: str, cuda_devices: list) -> None:
     
     accumulated_grad_batches = int(params.effective_batch_size) // int(config.train.dataloader.batch_size)
     # TODO: allow run without gpu without copy paste
-    trainer = Trainer(
+    if torch.cuda.is_available():
+        trainer = Trainer(
+            max_epochs=params.n_epochs,
+            gradient_clip_val=params.clip_norm,
+            deterministic=True,
+            check_val_every_n_epoch=params.val_every_epoch,
+            log_every_n_steps=params.log_every_n_steps,
+            logger=wandb_logger,
+            accelerator="gpu",
+            devices=cuda_devices,
+            callbacks=[
+                lr_logger,
+                early_stopping_callback,
+                checkpoint_callback,
+                print_epoch_result_callback,
+                progress_bar,
+            ],
+            accumulate_grad_batches=accumulated_grad_batches,
+        )
+    else:
+        trainer = Trainer(
         max_epochs=params.n_epochs,
         gradient_clip_val=params.clip_norm,
         deterministic=True,
         check_val_every_n_epoch=params.val_every_epoch,
         log_every_n_steps=params.log_every_n_steps,
         logger=wandb_logger,
-        accelerator="gpu",
-        devices=cuda_devices,
         callbacks=[
             lr_logger,
             early_stopping_callback,
@@ -115,6 +133,7 @@ def test(config: DictConfig, task: str, cuda_devices: list) -> None:
 
 
 if __name__ == "__main__":
+    torch.set_printoptions(profile="full")
     torch.set_float32_matmul_precision("medium")
     arg_parser = ArgumentParser()
     arg_parser.add_argument(
