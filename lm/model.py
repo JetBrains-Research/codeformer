@@ -56,12 +56,13 @@ class CodeformerLM(nn.Module):
         chunk_units_sos = torch.cat([chunk_sos_emb, chunk_units[:, :-1]], 1)
 
         # Decoder
-        decoder_input_embs = self.pad_token_id * torch.ones(batch_size,
-                                                            max_chunks,
-                                                            max_chunks + max_tokens_per_chunk,
-                                                            hidden_size,
-                                                            dtype=chunk_units.dtype,
-                                                            device=chunk_units.device)
+        decoder_input_embs = torch.full([batch_size,
+                                         max_chunks,
+                                         max_chunks + max_tokens_per_chunk,
+                                         hidden_size],
+                                        self.pad_token_id,
+                                        dtype=chunk_units.dtype,
+                                        device=chunk_units.device)
 
         decoder_token_embs = get_model_module(self.decoder).embeddings(token_ids_chunk)
         for sample_num in range(batch_size):
