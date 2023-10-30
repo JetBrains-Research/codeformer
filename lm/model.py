@@ -28,7 +28,7 @@ class CodeformerLM(nn.Module):
         self.pad_token_id: Tensor
 
     def forward(self, batch: BatchedTextTokens) -> dict[str, Tensor]:
-        # token_ids.shape = batch_size, max_chunks, max_tokens_per_chunk
+        # token_ids_chunk.shape = batch_size, max_chunks, max_tokens_per_chunk
         token_ids_chunk = batch.token_ids_chunk
         batch_size, max_chunks, max_tokens_per_chunk = token_ids_chunk.shape
 
