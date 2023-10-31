@@ -39,7 +39,6 @@ def generate_batches_from_splits_without_last_chunk(
         device: str="cuda",
     ) -> torch.Tensor:
         splits_length = (splits_size != pad_id).count_nonzero(dim=1)
-        # print("splits_length", splits_length)
         num_batches = splits_size.size()[0]
         num_splits = torch.sum(splits_length).item() - num_batches
         result = torch.zeros((num_splits, context_size), dtype=torch.long).to(device)
@@ -85,7 +84,8 @@ def pad_to_match_linear_layer(
         return result
 
 
-def generate_attention_mask(
+# here we assume that last chunk is omitted
+def generate_chunk_level_attention_mask(
         split_sizes: torch.Tensor,
         device: str="cuda",
 ) -> torch.Tensor:
@@ -97,11 +97,11 @@ def generate_attention_mask(
             dtype=torch.long,
         ).to(device)
         for i, split in enumerate(batch_split):
-            result[i][:split] = 1 # think about +1
+            result[i][:split] = 1 # would be split + 1 in case of chunk is not omitted
         return result
 
 
-def concat_with_bos_embeddings(
+def concat_with_bos_embedding(
         x: torch.Tensor,
         bos_embedding: torch.Tensor,
     ) -> torch.Tensor:
@@ -111,7 +111,6 @@ def concat_with_bos_embeddings(
         return torch.cat((bos_embeddings, x), dim=1)
 
 
-# think about adding eos tokens for chunks
 def generate_context_for_last_decoder(
         input_ids: torch.Tensor,
         input_embeddings: torch.Tensor,
@@ -122,11 +121,10 @@ def generate_context_for_last_decoder(
     ):
     splits_length = [split_size - 1 for split_size in (splits_size != pad_id).count_nonzero(dim=1)]
     num_batches = chunk_representations.size()[0]
-    p_sum = 0
-    # print("input_ids", input_ids.size())
     result = torch.zeros((input_embeddings.size()[0], input_embeddings.size()[1] + 1, input_embeddings.size()[2]), dtype=torch.float).to(device)
     labels = torch.zeros((input_embeddings.size()[0], input_embeddings.size()[1] + 1), dtype=torch.long).to(device)
-    # print("result", result.size())
+    p_sum = 0
+    
     for batch_num in range(num_batches):
         split_size = splits_length[batch_num]
         
@@ -134,22 +132,11 @@ def generate_context_for_last_decoder(
         batch_input_embeddings = input_embeddings[p_sum: p_sum + split_size]
         batch_chunk_representations = chunk_representations[batch_num][:split_size]
 
-        # shifted_batch_embeddings_representations = torch.zeros(batch_input_embeddings.size(), dtype=torch.float).to(device)
-        # shifted_batch_embeddings_representations[1: split_size] = batch_input_embeddings[:split_size - 1]
-
         shifted_batch_chunk_representations = torch.zeros(batch_chunk_representations.size(), dtype=torch.float).to(device)
         shifted_batch_chunk_representations[1: split_size] = batch_chunk_representations[:split_size - 1]
         shifted_batch_chunk_representations = shifted_batch_chunk_representations.unsqueeze(dim=1)
-        
-        # print("batch_input_embeddings", batch_input_embeddings.size())
-        # print("shifted_batch_embeddings_representations", shifted_batch_embeddings_representations.size())
-        # print("shifted_batch_chunk_representations", shifted_batch_chunk_representations.size())
+
         result[p_sum: p_sum + split_size] = torch.cat((shifted_batch_chunk_representations, batch_input_embeddings), dim=1)
-        # print("result", result[p_sum: p_sum + split_size].size())
         p_sum += split_size
     
     return result, labels, None, None
-
-
-def generate_labels_mask_for_last_decoder() -> torch.Tensor:
-    pass

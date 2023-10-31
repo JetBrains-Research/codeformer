@@ -11,10 +11,9 @@ from jetnn.data_processing.base_data_classes import (
 from jetnn.models.utils.codeformer_utils import (
     generate_batches_from_splits_without_last_chunk,
     pad_to_match_linear_layer,
-    concat_with_bos_embeddings,
-    generate_attention_mask,
+    concat_with_bos_embedding,
+    generate_chunk_level_attention_mask,
     generate_context_for_last_decoder,
-    generate_labels_mask_for_last_decoder,
 )
 
 class CodeformerLM(nn.Module):
@@ -44,15 +43,13 @@ class CodeformerLM(nn.Module):
                                           n_positions=decoder_context_size,)
         
         self._token_encoder = GPT2Model(token_encoder_config)
-        self._split_decoder = GPT2Model(split_decoder_config)
+        self._chunk_decoder = GPT2Model(split_decoder_config)
         self._decoder = GPT2LMHeadModel(decoder_config)
-        self._split_accumulator_linear = nn.Linear(self._token_encoder_context_size, 1)
+        self._chunk_accumulator_linear = nn.Linear(self._token_encoder_context_size, 1)
 
     # keep in mind that sum(split_sizes[i]) may be less that len(input_ids[i]) for any i
     # TODO: add samples for last chunk!
     def forward(self, batch: BatchedData) -> Tensor:
-        # print("batch.text_tokens", batch.text_tokens.size(), batch.text_tokens)
-        # print("batch.batch_split", batch.batch_split.size(), batch.batch_split)
         splits, last_chunk_tokens = generate_batches_from_splits_without_last_chunk(
             input_ids=batch.text_tokens, 
             splits_size=batch.batch_split, 
@@ -62,16 +59,13 @@ class CodeformerLM(nn.Module):
             eos_id=self._eos_id,
             device=self._device,
         )
-        # print("splits", splits.size(), splits)
-        # print("last_chunk_tokens", last_chunk_tokens.size(), last_chunk_tokens)
         attention_mask = (splits == self._pad_id)
 
         context_hidden_states = self._token_encoder(
             input_ids=splits, attention_mask=attention_mask
         ).hidden_states
         input_embeddings, context = context_hidden_states[0], context_hidden_states[-1]
-        # print("context", context.size())
-        # print("input_embeddings", input_embeddings.size())
+
         cropped_context = pad_to_match_linear_layer(
             x=context,
             split_sizes=batch.batch_split,
@@ -79,21 +73,15 @@ class CodeformerLM(nn.Module):
             device=self._device,
             last_chunk_omitted=True,
         )
-        # print("cropped_context before linear", cropped_context.size())
         cropped_context = cropped_context.permute(0, 1, 3, 2)
-        cropped_context = self._split_accumulator_linear(cropped_context).squeeze(dim=3)
-        # print("cropped_context after linear", cropped_context.size())
+        cropped_context = self._chunk_accumulator_linear(cropped_context).squeeze(dim=3)
+        cropped_context = concat_with_bos_embedding(cropped_context, input_embeddings[0][0])
         
-        cropped_context = concat_with_bos_embeddings(cropped_context, input_embeddings[0][0])
-        # print("cropped_context after bos", cropped_context.size())
-        
-        attention_mask = generate_attention_mask(
+        attention_mask = generate_chunk_level_attention_mask(
             split_sizes=batch.batch_split,
             device=self._device,
         )
-        cropped_context = self._split_decoder(inputs_embeds=cropped_context, attention_mask=attention_mask).last_hidden_state
-
-        # print("cropped_context after decoder", cropped_context.size())
+        cropped_context = self._chunk_decoder(inputs_embeds=cropped_context, attention_mask=attention_mask).last_hidden_state
 
         context, labels, cross_attention, cross_attention_mask = generate_context_for_last_decoder(
             input_ids=splits,
@@ -104,10 +92,6 @@ class CodeformerLM(nn.Module):
             device=self._device,
         )
 
-        # print("labels", labels.size())
-        # print("decoder context", context.size())
         result = self._decoder(inputs_embeds=context)
-        
-        # print("logits", result.logits.size())
-        
+
         return result.logits, labels
