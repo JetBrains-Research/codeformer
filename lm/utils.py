@@ -149,5 +149,3 @@ def get_model_module(model: PreTrainedModel) -> PreTrainedModel:
         return next(child for child, is_pret in zip(children, is_pretrained_model) if is_pret)
     else:
         return model
-
-
