@@ -64,6 +64,8 @@ class CodeformerLM(nn.Module):
                                          device=chunk_units.device)
 
         decoder_token_embs = get_model_module(self.decoder).embeddings(token_ids_chunk)
+        # TODO: check computations step by step
+
         for sample_num in range(batch_size):
             num_chunks = len(batch.split_sizes_list[sample_num])
             for chunk_num in range(num_chunks):
@@ -72,28 +74,30 @@ class CodeformerLM(nn.Module):
                 decoder_input_embs[
                     sample_num,
                     chunk_num,
-                    chunk_num + 1: chunk_num + 1 + num_tokens] = decoder_token_embs[sample_num, chunk_num, :num_tokens]
+                    chunk_num + 1: chunk_num + 1 + num_tokens
+                ] = decoder_token_embs[sample_num, chunk_num, :num_tokens]
         decoder_input_embs = decoder_input_embs.reshape(
             batch_size * max_chunks, max_chunks + max_tokens_per_chunk, hidden_size
         )
-        logits_stacked = self.decoder(inputs_embeds=decoder_input_embs).logits
-        vocab_size = logits_stacked.shape[2]
-        logits_stacked = logits_stacked.reshape(batch_size, max_chunks, max_chunks + max_tokens_per_chunk, vocab_size)
+        units_stacked = get_model_module(self.decoder)(inputs_embeds=decoder_input_embs).last_hidden_state
+        vocab_size = units_stacked.shape[2]
+        units_stacked = units_stacked.reshape(batch_size, max_chunks, max_chunks + max_tokens_per_chunk, vocab_size)
 
         # Logits
 
         # do not predict bos and predict eos
-        logits_shape = [batch_size, max_chunks, max_tokens_per_chunk - 1, vocab_size]
-        logits = torch.zeros(*logits_shape,
-                             device=logits_stacked.device,
-                             dtype=logits_stacked.dtype)
+        units_shape = [batch_size, max_chunks, max_tokens_per_chunk - 1, hidden_size]
+        units_reassembled = torch.zeros(*units_shape,
+                             device=units_stacked.device,
+                             dtype=units_stacked.dtype)
         for sample_num in range(batch_size):
             num_chunks = len(batch.split_sizes_list[sample_num])
             for chunk_num in range(num_chunks):
                 num_tokens = batch.split_sizes_list[sample_num][chunk_num]
-                curr_logits = logits_stacked[sample_num, chunk_num, chunk_num + 1: chunk_num + 1 + num_tokens]
-                logits[sample_num, chunk_num, :num_tokens] = curr_logits
+                curr_units = units_stacked[sample_num, chunk_num, chunk_num + 1: chunk_num + 1 + num_tokens - 1]
+                units_reassembled[sample_num, chunk_num, :num_tokens - 1] = curr_units
         # logits = torch.permute(logits, [0, 3, 1, 2])
+        logits = self.decoder.cls(units_reassembled)
         targets = token_ids_chunk[:, :, 1:]
         return metrics(logits, targets, batch.pad_token_id)
 
