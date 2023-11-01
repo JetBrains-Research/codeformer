@@ -12,6 +12,7 @@ model:
       n_embd: 768
       n_layer: 12
       n_head: 12
+      is_decoder: False
       output_hidden_states: True
       # n_inner will be 4 * n_embd by default
   
@@ -20,15 +21,19 @@ model:
       n_layer: 12
       n_head: 12
       is_decoder: True # this is because we want to restrict split encoder looking ahead and
-                      # decoder applies square mask automatically
+                       # decoder applies square mask automatically
       output_hidden_states: True
-      # n_inner will be 4 * n_embd by default
   
     decoder_config:
       n_embd: 768
       n_layer: 12
       n_head: 12
       is_decoder: True
+
+  GPTLM:
+    n_embd: 768
+    n_layer: 12
+    n_head: 12
 
 data:
   root: "../../datasets/LM_test"

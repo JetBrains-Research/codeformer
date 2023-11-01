@@ -1,19 +1,18 @@
 from typing import List, Optional, Any, Dict, Tuple
 
 import torch
-from commode_utils.losses import SequenceCrossEntropyLoss
-from commode_utils.metrics import SequentialF1Score, ClassificationMetrics
 from omegaconf import DictConfig
 from torch import nn
 from pytorch_lightning import LightningModule
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
-from torchmetrics import MetricCollection, Metric
 
 from jetnn.data_processing.vocabularies.vocabulary import Vocabulary
-from jetnn.metrics.chrf import ChrF
 from jetnn.models.lm.codeformer_lm import (
     CodeformerLM,
+)
+from jetnn.models.lm.gpt_lm import (
+    GPTLM,
 )
 from jetnn.models.utils.utils import configure_optimizers_alon
 
@@ -30,6 +29,10 @@ class LanguageModelingModel(LightningModule):
             return CodeformerLM(
                 self._config.model.CodeformerLM, self._config.data, self._vocab
             )
+        elif self._config.model.LM == "GPT":
+            return GPTLM(
+                self._config.model.GPT, self._config.data, self._vocab
+            )
         else:
             raise ValueError("Unknown LM type")
 
@@ -38,6 +41,7 @@ class LanguageModelingModel(LightningModule):
 
     def calc_loss_and_perplexity(self, logits: torch.Tensor, targets: torch.LongTensor, pad_id: int) -> torch.Tensor:
         # logits and targets must be compatible with torch.nn.functional.cross_entropy
+        # check pad_id != end of chunk
         loss_tens = torch.nn.functional.cross_entropy(logits, targets, reduction='none', ignore_index=pad_id)
         loss = loss_tens.sum() / torch.count_nonzero(loss_tens)
         ppl = loss.exp()
@@ -49,21 +53,24 @@ class LanguageModelingModel(LightningModule):
         return self._lm(batch)
 
     def _shared_step(self, batch, step: str) -> Dict:
-        logits, labels = self(batch, step)
+        logits, labels, hf_loss = self(batch, step)
         logits = logits.flatten(0, 1)
         labels = labels.flatten(0, 1)
-        loss, ppl = self.calc_loss_and_perplexity(logits=logits, targets=labels, pad_id=0)
-        result = {f"{step}/loss": loss, f"{step}/ppl": ppl}
+        loss, ppl = self.calc_loss_and_perplexity(logits=logits, targets=labels, pad_id=0) # get pad_id from config
+        result = {f"{step}/loss": loss, f"{step}/hf_loss": hf_loss, f"{step}/ppl": ppl}
         return result
 
     def training_step(self, batch, batch_idx: int) -> Dict:  # type: ignore
         result = self._shared_step(batch, "train")
         self.log_dict(result, on_step=True, on_epoch=False)
+        self.log("hf_loss", result["train/hf_loss"], prog_bar=True, logger=False)
         self.log("ppl", result["train/ppl"], prog_bar=True, logger=False)
         return result["train/loss"]
 
     def validation_step(self, batch, batch_idx: int) -> Dict:  # type: ignore
         result = self._shared_step(batch, "val")
+        self.log_dict(result, on_step=True, on_epoch=False)
+        # self.log("ppl", result["val/ppl"], prog_bar=True, logger=False)
         return result["val/loss"]
 
     def test_step(self, batch, batch_idx: int) -> Dict:  # type: ignore

@@ -47,7 +47,7 @@ class LanguageModelingDataset(Dataset):
             tokenized_text = torch.tensor(self.tokenize(sample['text'], self._config.max_text_tokens))
             tokens_split = torch.tensor([])
             if self._config.use_ast_splitter:
-                tmp_tokenized_text = list(filter(lambda x: x != self._vocab.pad_id(), tokenized_text))[1:-1]
+                tmp_tokenized_text = list(filter(lambda x: x != self._vocab.pad_id(), tokenized_text))[1:-1] #TODO: remove
                 tokens = list(map(self._vocab.tokenizer.decode, tmp_tokenized_text))
                 tokens_split = self._text_tree.process_text(
                     sample['text'], tokens, self._config.max_chunk_size

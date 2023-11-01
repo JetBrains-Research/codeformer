@@ -133,7 +133,6 @@ def test(config: DictConfig, task: str, cuda_devices: list) -> None:
 
 
 if __name__ == "__main__":
-    torch.set_printoptions(threshold=10000)
     torch.set_float32_matmul_precision("medium")
     arg_parser = ArgumentParser()
     arg_parser.add_argument(
