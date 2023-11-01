@@ -1,5 +1,6 @@
 import hydra
 import torch
+from transformers import get_linear_schedule_with_warmup, get_constant_schedule
 from tqdm import tqdm
 import wandb
 
@@ -35,6 +36,14 @@ def main(args):
 
     model.train()
     opt = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    total_steps = len(dl_train) * args.epochs
+    match args.scheduler:
+        case None:
+            sched = get_constant_schedule(opt)
+        case 'triangular':
+            sched = get_linear_schedule_with_warmup(opt, total_steps * args.warmup_part, total_steps)
+        case _:
+            raise NotImplementedError
 
     eval_results = evaluate(model, dl_valid, device, 'val', preprocessor, postprocessor)
     eval_results['epoch'] = 0
@@ -57,6 +66,7 @@ def main(args):
                 train_iterator.set_description(f'Loss: {loss.item():.3f}')
                 opt.step()
                 opt.zero_grad()
+                sched.step()
                 mini_batch_loss = torch.mean(torch.tensor(losses_micro_batches))
                 losses_micro_batches = []
                 wandb.log({'loss': mini_batch_loss})

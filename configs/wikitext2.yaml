@@ -10,6 +10,8 @@ seed: 31
 weight_decay: 0.0
 learning_rate: 1e-4
 accumulated_batch_size: 128
+scheduler: triangular
+warmup_part: 0.03
 
 data_params:
   dataset_name: wikitext2raw
