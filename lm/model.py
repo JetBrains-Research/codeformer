@@ -52,10 +52,12 @@ class CodeformerLM(nn.Module):
         # Chunk representations
         chunk_units = self.encoder_chunk(inputs_embeds=chunk_embs,
                                          attention_mask=batch.att_mask_chunks).last_hidden_state
+
+        # Decoder
+
         chunk_sos_emb = self.chunk_sos_embedding.reshape(1, 1, -1).repeat(batch_size, 1, 1)
         chunk_units_sos = torch.cat([chunk_sos_emb, chunk_units[:, :-1]], 1)
 
-        # Decoder
         decoder_input_embs = torch.zeros(batch_size,
                                          max_chunks,
                                          max_chunks + max_tokens_per_chunk,
