@@ -153,6 +153,6 @@ def get_model_module(model: PreTrainedModel) -> PreTrainedModel:
 
 def check_tokenizer_pad_id(tokenizer: Tokenizer) -> None:
     assert (tokenizer.bos_token_id is not None) and (tokenizer.bos_token_id != tokenizer.pad_token_id)
-    assert (tokenizer.sos_token_id is not None) and (tokenizer.sos_token_id != tokenizer.pad_token_id)
+    assert (tokenizer.eos_token_id is not None) and (tokenizer.eos_token_id != tokenizer.pad_token_id)
     # assert (tokenizer.sos_token_id != tokenizer.bos_token_id)  # it seems to be ok
     assert tokenizer.pad_token_id is not None
