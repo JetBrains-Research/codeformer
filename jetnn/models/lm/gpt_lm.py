@@ -27,5 +27,14 @@ class GPTLM(nn.Module):
 
     def forward(self, batch: BatchedData) -> Tensor:
         attention_mask = (batch.text_tokens == self._pad_id)
-        result = self._decoder(input_ids=batch.text_tokens, attention_mask=attention_mask, labels=batch.text_tokens)
-        return result.logits, batch.text_tokens, result.loss
+
+        labels = torch.zeros_like(batch.text_tokens).to(self._device)
+        labels[:, :] = self._pad_id
+        labels[:, :-1] = batch.text_tokens[:, 1:]
+
+        hf_labels = batch.text_tokens.to(self._device)
+        hf_labels = torch.where(hf_labels == self._pad_id, -100, hf_labels)
+
+        result = self._decoder(input_ids=batch.text_tokens, attention_mask=attention_mask, labels=hf_labels)
+        
+        return result.logits, labels, result.loss

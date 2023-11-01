@@ -150,6 +150,7 @@ def generate_context_for_last_decoder(
         result[p_sum: p_sum + split_size] = torch.cat((batch_chunk_representations, batch_input_embeddings), dim=1)
         p_sum += split_size
     
+    hf_labels = torch.where(hf_labels == pad_id, -100, hf_labels)
     return result, labels, hf_labels, None, None
 
 # v [b, l, d]

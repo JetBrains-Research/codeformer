@@ -29,9 +29,9 @@ class LanguageModelingModel(LightningModule):
             return CodeformerLM(
                 self._config.model.CodeformerLM, self._config.data, self._vocab
             )
-        elif self._config.model.LM == "GPT":
+        elif self._config.model.LM == "GPTLM":
             return GPTLM(
-                self._config.model.GPT, self._config.data, self._vocab
+                self._config.model.GPTLM, self._config.data, self._vocab
             )
         else:
             raise ValueError("Unknown LM type")
@@ -56,7 +56,7 @@ class LanguageModelingModel(LightningModule):
         logits, labels, hf_loss = self(batch, step)
         logits = logits.flatten(0, 1)
         labels = labels.flatten(0, 1)
-        loss, ppl = self.calc_loss_and_perplexity(logits=logits, targets=labels, pad_id=0) # get pad_id from config
+        loss, ppl = self.calc_loss_and_perplexity(logits=logits, targets=labels, pad_id=self._vocab.pad_id())
         result = {f"{step}/loss": loss, f"{step}/hf_loss": hf_loss, f"{step}/ppl": ppl}
         return result
 
