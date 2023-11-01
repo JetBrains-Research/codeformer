@@ -24,6 +24,7 @@ def main(args):
 
     tokenizer = get_tokenizer_from_config(args)
     check_tokenizer_pad_id(tokenizer)
+    print('Tokenizer pad_token_id is: OK')
     print(f'Tokenizer vocab size: {len(tokenizer.vocab)}')
     device = torch.device('cuda:0')
     model = get_model_from_config(args).to(device)
