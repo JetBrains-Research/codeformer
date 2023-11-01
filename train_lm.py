@@ -8,7 +8,7 @@ from lm.eval_utils import evaluate
 from lm.utils import (setup_wandb, get_tokenizer_from_config,
                       get_train_batch_preprocessor,
                       get_model_output_postprocessor,
-                      get_model_from_config)
+                      get_model_from_config, check_tokenizer_pad_id)
 
 
 @hydra.main('configs', 'wikitext2', version_base=None)
@@ -23,6 +23,7 @@ def main(args):
     assert args.weight_decay == 0.0
 
     tokenizer = get_tokenizer_from_config(args)
+    check_tokenizer_pad_id(tokenizer)
     print(f'Tokenizer vocab size: {len(tokenizer.vocab)}')
     device = torch.device('cuda:0')
     model = get_model_from_config(args).to(device)
