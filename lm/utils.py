@@ -276,3 +276,36 @@ def assemble(inputs: Tensor, sizes: Tensor, fill_empty_val: int | float | Tensor
     #              [[4., 5., 6.],
     #               [0., 0., 0.]]]
     return ext_inputs[chunk_flat_ids.view(batch_size, max_chunks)]
+
+
+def assemble_decoder_inputs(source: Tensor,
+                            sizes: LongTensor,
+                            from_starting_points: LongTensor,
+                            to_starting_points: LongTensor,
+                            max_len: int) -> Tensor:
+    device = source.device
+    input_hidden_sizes = source.shape[2:]
+    mask = sizes > 0
+    batch_size, chunks_per_sample = source.shape[:2]
+    num_chunks = sizes.count_nonzero()
+    max_size = sizes.max()
+
+    from_starting_points_flat = from_starting_points[mask].view(num_chunks, 1)
+    d1_from_indices = torch.arange(max_size).view(1, max_size).repeat(num_chunks, 1) + from_starting_points_flat
+    sizes_flat = sizes[mask].view(num_chunks, 1)
+    mask_by_size = d1_from_indices < sizes_flat + from_starting_points_flat
+
+    d1_from_indices_flat = d1_from_indices[mask_by_size]
+
+    d0_from_indices = torch.arange(batch_size).view(batch_size, 1).repeat(1, chunks_per_sample)[mask]
+    d0_from_indices_flat = d0_from_indices.view(num_chunks, 1).repeat(1, max_size)[mask_by_size]
+
+    d0_to_indices = torch.arange(num_chunks).view(num_chunks, 1).repeat(1, max_size)[mask_by_size]
+    d1_to_indices = torch.arange(max_size).view(1, max_size).repeat(num_chunks, 1)[mask_by_size]
+    d1_to_indices = d1_to_indices + to_starting_points[mask].view(num_chunks, 1).repeat(1, max_size)[mask_by_size]
+
+    output = torch.zeros(num_chunks, max_len, *input_hidden_sizes, dtype=source.dtype, device=device)
+
+    output[d0_to_indices, d1_to_indices] = source[d0_from_indices_flat, d1_from_indices_flat]
+
+    return output
