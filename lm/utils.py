@@ -235,3 +235,44 @@ def disassemble(inputs: Tensor, sizes: LongTensor, fill_empty_val: Tensor | int 
     return inputs_with_filler_first[sample_nums, indices].view(num_chunks_total, max_chunk_length, *inputs.shape[2:])
 
 
+def assemble(inputs: Tensor, sizes: Tensor, fill_empty_val: int | float | Tensor) -> Tensor:
+    # inputs.shape = [num_chunks, max_chunk_len, *other_shapes]
+    # sizes.shape = [batch_size, seq_len]
+    # fill_empty_val.shape = [*other_shapes] where other shapes can be empty
+    #   so that the inputs are 2D, OR scalar
+
+    # Example (intermediate values for this example will be shown further with "E:" signature):
+    #
+    # inputs:
+    # [[1, 2, 0],
+    #  [3, 0, 0],
+    #  [4, 5, 6]]
+    #
+    # sizes:
+    # [[2, 1],
+    #  [3, 0]]
+    #
+    # fill_empty_val:
+    # 0
+    #
+    # Expected output:
+    # [[[1., 2., 0.],
+    #   [3., 0., 0.]],
+    #  [[4., 5., 6.],
+    #   [0., 0., 0.]]]
+
+    max_chunk_len = inputs.shape[1]
+    batch_size, max_chunks = sizes.shape
+    ext_inputs = torch.cat([torch.zeros(1, max_chunk_len), inputs], 0)  # E: [[0, 0, 0], [1, 2, 0], [3, 0, 0], [4, 5, 6]]
+    chunk_ids = torch.arange(max_chunks).view(1, batch_size).repeat(batch_size, 1) + 1  # E: [[1, 2], [1, 2]]
+    non_zero_sizes_cumsum = (sizes > 0).float().sum(1, keepdim=True)[:-1].cumsum(0).long()  # E: [2]
+    shifts = torch.cat([torch.zeros(1, 1, device=sizes.device, dtype=torch.long),
+                        non_zero_sizes_cumsum], 0)  # E: [[0], [2]]
+    mask = (sizes > 0).float()  # E: [[1, 1], [1, 0]]
+    chunk_flat_ids = (chunk_ids + shifts) * mask  # E: [[1, 2], [3, 0]]
+    chunk_flat_ids = chunk_flat_ids.view(batch_size * max_chunks).long()  # E: [1, 2, 3, 0]
+    # E: return = [[[1., 2., 0.],
+    #               [3., 0., 0.]],
+    #              [[4., 5., 6.],
+    #               [0., 0., 0.]]]
+    return ext_inputs[chunk_flat_ids.view(batch_size, max_chunks)]
