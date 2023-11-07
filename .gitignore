@@ -10,3 +10,4 @@ bad_samples.log
 .idea
 lightning_logs/
 jetnn/runners/tree_sitter_build*
+/artifacts/
