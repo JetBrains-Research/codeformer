@@ -232,7 +232,6 @@ def disassemble(inputs: Tensor,
     max_chunk_range = torch.arange(1, max_chunk_length + 1).view(1, max_chunk_length)
     chunk_mask = max_chunk_range <= sizes[non_zero_sizes_mask].view(num_chunks_total, 1)
     plain_indices = torch.arange(1, max_chunk_length + 1).view(1, max_chunk_length).repeat(num_chunks_total, 1)
-    print(f'plain_indices: {plain_indices}')
     # E: plain_indices =
     # [[1, 2, 3],
     #  [1, 2, 3],
