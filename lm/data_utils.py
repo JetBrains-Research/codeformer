@@ -6,7 +6,7 @@ from datasets import load_dataset
 from pytorch_lightning import LightningDataModule
 from tokenizers import Tokenizer
 import torch
-from torch import Tensor
+from torch import Tensor, LongTensor
 from torch.utils.data import DataLoader, IterableDataset, Dataset
 import torch.multiprocessing
 
@@ -34,6 +34,7 @@ class BatchedTextTokens:
     token_ids: Tensor
     token_ids_chunk: Tensor
     split_sizes_list: list[list[int]]
+    split_sizes_tensor: LongTensor
     max_tokens_per_split: int
     max_tokens_per_sample: int
     max_splits: int
@@ -84,6 +85,11 @@ class BatchedTextTokens:
         self.split_sizes_list = []
         for s in samples:
             self.split_sizes_list.append([split_size + 2 for split_size in s.split_sizes])
+        max_splits_per_sample = max(len(l) for l in self.split_sizes_list)
+        self.split_sizes_tensor = torch.zeros(batch_size, max_splits_per_sample, dtype=torch.long)
+        for n in range(batch_size):
+            cur_split_sizes = torch.tensor(self.split_sizes_list[n], dtype=torch.long)
+            self.split_sizes_tensor[n, : len(cur_split_sizes)] = cur_split_sizes
 
     def __len__(self) -> int:
         return len(self.token_ids_list)
@@ -98,6 +104,7 @@ class BatchedTextTokens:
         self.att_mask = self.att_mask.to(device)
         self.att_mask_chunk_tokens = self.att_mask_chunk_tokens.to(device)
         self.att_mask_chunks = self.att_mask_chunks.to(device)
+        self.split_sizes_tensor = self.split_sizes_tensor.to(device)
         return self
 
 
