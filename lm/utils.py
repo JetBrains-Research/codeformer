@@ -169,11 +169,17 @@ def expand_filler(fill_empty_val: int | float | Tensor, inputs_shape: torch.Size
     return filler
 
 
-def disassemble(inputs: Tensor, sizes: LongTensor, fill_empty_val: Tensor | int | float) -> Tensor:
+def disassemble(inputs: Tensor,
+                sizes: LongTensor,
+                fill_empty_val: Tensor | int | float,
+                bos_value: None | Tensor | int = None,
+                eos_value: None | Tensor | int = None) -> Tensor:
     # inputs.shape = [batch_size, seq_len, *other_shapes]
     # sizes.shape = [batch_size, max_chunks_per_sample]
     # fill_empty_val.shape = [*other_shapes] where other shapes can be empty
     #   so that the inputs are 2D, OR scalar
+    # bos_value: if not None, every element (along 0 dimension) will be prepended with it
+    # eos_value: if not None, every element (along 0 dimension) will be prepended with it
 
     # Example (intermediate values for this example will be shown further with "E:" signature):
     #
@@ -240,7 +246,15 @@ def disassemble(inputs: Tensor, sizes: LongTensor, fill_empty_val: Tensor | int 
 
     inputs_with_filler_first = torch.cat([filler, inputs], dim=1)  # E: [[0, 1, 2, 3], [0, 4, 5, 6]]
     # E: return [[1, 2, 0], [3, 0, 0], [4, 5, 6]]
-    return inputs_with_filler_first[sample_nums, indices].view(num_chunks_total, max_chunk_length, *inputs.shape[2:])
+    outputs = inputs_with_filler_first[sample_nums, indices].view(num_chunks_total, max_chunk_length, *inputs.shape[2:])
+    if eos_value is not None:
+        outputs = torch.cat([outputs, torch.full([num_chunks_total, 1], fill_empty_val)], 1)
+        sizes_flat = sizes[non_zero_sizes_mask]
+        outputs[torch.arange(num_chunks_total), sizes_flat] = eos_value
+    if bos_value is not None:
+        outputs = torch.cat([torch.full([num_chunks_total, 1], bos_value), outputs], 1)
+
+    return outputs
 
 
 def assemble(inputs: Tensor, sizes: Tensor, fill_empty_val: int | float | Tensor) -> Tensor:
