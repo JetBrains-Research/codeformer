@@ -208,12 +208,12 @@ def disassemble(inputs: Tensor,
     num_chunks_range = torch.arange(1, num_chunks_total + 1, device=device).view(num_chunks_total, 1)
     # E: [[1], [2], [3]]
 
-    num_chunkscum_sum = num_chunks_per_sample.cumsum(0).view(1, batch_size)  # E: [[2, 3]]
+    num_chunks_cumsum = num_chunks_per_sample.cumsum(0).view(1, batch_size)  # E: [[2, 3]]
     # E: num_chunks_range > num_chunkscum_sum =
     # [[0, 0]
     #  [0, 0],
     #  [1, 0]]
-    sample_nums = torch.sum(num_chunks_range > num_chunkscum_sum, 1)  # E: [0, 0, 1]
+    sample_nums = torch.sum(num_chunks_range > num_chunks_cumsum, 1)  # E: [0, 0, 1]
 
     sample_nums = sample_nums.view(num_chunks_total, 1).repeat(1, max_chunk_length)
     # E: [[0, 0, 0], [0, 0, 0], [1, 1, 1]]
