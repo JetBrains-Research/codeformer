@@ -332,3 +332,53 @@ def assemble_decoder_inputs(source: Tensor,
     output[d0_to_indices, d1_to_indices] = source[d0_from_indices_flat, d1_from_indices_flat]
 
     return output
+
+
+def prepare_token_ids_for_decoder(token_ids: LongTensor,
+                                  sizes: LongTensor,
+                                  pad_id: int | LongTensor,
+                                  bos_id: int | LongTensor,
+                                  eos_id: int | LongTensor) -> tuple[Tensor, LongTensor]:
+    dtype = token_ids.dtype
+    device = token_ids.device
+    batch_size, seq_len = token_ids.shape
+    max_chunks_per_sample = sizes.shape[1]
+    cur_plus_prev_sizes = sizes.detach().clone()
+    cur_plus_prev_sizes[:, 1:] = cur_plus_prev_sizes[:, 1:] + cur_plus_prev_sizes[:, :-1]
+    mask = sizes > 0
+    cur_plus_prev_sizes = cur_plus_prev_sizes * mask.long()
+    cur_plus_prev_sizes_flat = cur_plus_prev_sizes[cur_plus_prev_sizes > 0]
+    num_chunks_total = mask.count_nonzero()
+
+    from_starting_points = torch.concat([torch.zeros(batch_size, 2, device=device, dtype=torch.long),
+                                         sizes[:, :-2].cumsum(1)],
+                                        1)[:, :max_chunks_per_sample][mask]
+    max_len = cur_plus_prev_sizes.max()
+    # outputs = assemble_decoder_inputs(token_ids, cur_plus_prev_sizes,
+    #                                   from_starting_points, to_starting_points, max_len)
+    outputs = torch.zeros(num_chunks_total, max_len, dtype=dtype, device=device)
+
+    d1_from_ids = torch.arange(seq_len, device=device).view(1, seq_len).repeat(num_chunks_total, 1)
+    mask_chunk = d1_from_ids < cur_plus_prev_sizes_flat.view(num_chunks_total, 1)
+    d1_from_ids = d1_from_ids[mask_chunk]
+    d1_to_ids = d1_from_ids
+    d1_from_ids = d1_from_ids + from_starting_points.view(num_chunks_total, 1).repeat(1, max_len)[mask_chunk]
+    d0_from_ids = torch.arange(batch_size, device=device).view(batch_size, 1).repeat(1, max_chunks_per_sample)[mask]
+    d0_from_ids = d0_from_ids.view(num_chunks_total, 1).repeat(1, max_len)[mask_chunk]
+
+    # d1_to_ids = torch.arange(max_len, device=device).view(1, max_len).repeat(num_chunks_total, 1)
+    # d1_to_ids = d1_from_ids[mask_chunk]
+    d0_to_ids = torch.arange(num_chunks_total, device=device).view(num_chunks_total, 1).repeat(1, max_len)
+    d0_to_ids = d0_to_ids[mask_chunk]
+    outputs[d0_to_ids, d1_to_ids] = token_ids[d0_from_ids, d1_from_ids]
+
+    # add eos
+    outputs = torch.cat([outputs, torch.full([num_chunks_total, 1], pad_id)], 1)
+    outputs[torch.arange(num_chunks_total), cur_plus_prev_sizes_flat] = eos_id
+
+    # add bos
+    outputs = torch.cat([torch.full([num_chunks_total, 1], bos_id), outputs], 1)
+
+    # output = disassemble(token_ids, cur_plus_prev_sizes, pad_id, bos_id, eos_id)
+    lens: LongTensor = (cur_plus_prev_sizes + 2) * mask
+    return outputs, lens[lens > 0]
