@@ -382,3 +382,28 @@ def prepare_token_ids_for_decoder(token_ids: LongTensor,
     # output = disassemble(token_ids, cur_plus_prev_sizes, pad_id, bos_id, eos_id)
     lens: LongTensor = (cur_plus_prev_sizes + 2) * mask
     return outputs, lens[lens > 0]
+
+
+def put_token_embeddings_at_specified_positions(token_embs_by_chunk_flat: Tensor,
+                                                prev_and_curr_chunk_lens_plus_bos_eos: LongTensor,
+                                                start_positions: LongTensor,
+                                                max_len: int) -> Tensor:
+    lens = prev_and_curr_chunk_lens_plus_bos_eos
+    rest_shape = token_embs_by_chunk_flat.shape[2:]
+    chunk_max_len = lens.max()
+    num_chunks = len(lens)
+    device = token_embs_by_chunk_flat.device
+    dtype = token_embs_by_chunk_flat.dtype
+    total_chunks = token_embs_by_chunk_flat.shape[0]
+    outputs = torch.zeros(total_chunks, max_len, *rest_shape, device=device, dtype=dtype)
+    d0_ids = torch.arange(num_chunks).view(num_chunks, 1).repeat(1, chunk_max_len)
+    mask = d0_ids < lens.view(num_chunks, 1)
+    d0_ids = d0_ids[mask]
+    d1_ids = torch.arange(chunk_max_len).view(1, chunk_max_len).repeat(num_chunks, 1)
+    d1_ids = d1_ids[mask]
+
+    to_d0_ids = d0_ids
+    shifts = start_positions.view(num_chunks, 1).repeat(1, chunk_max_len)[mask]
+    to_d1_ids = d1_ids + shifts
+    outputs[to_d0_ids, to_d1_ids] = token_embs_by_chunk_flat[d0_ids, d1_ids]
+    return outputs
