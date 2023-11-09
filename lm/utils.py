@@ -203,7 +203,7 @@ def disassemble(inputs: Tensor,
     batch_size = inputs.shape[0]
     num_chunks_total = sizes.count_nonzero()  # E: 3
     max_chunk_length = sizes.max()  # E: 3
-    num_chunks_per_sample = sizes.count_nonzero(dim=0)  # E: [2, 1]
+    num_chunks_per_sample = sizes.count_nonzero(dim=1)  # E: [2, 1]
 
     num_chunks_range = torch.arange(1, num_chunks_total + 1, device=device).view(num_chunks_total, 1)
     # E: [[1], [2], [3]]
