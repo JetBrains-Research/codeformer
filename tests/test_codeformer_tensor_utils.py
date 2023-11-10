@@ -67,7 +67,7 @@ def test_assemble():
 
 
 def test_assemble_decoder_inputs():
-    source = torch.tensor([[1, 2, 0], [3, 4, 5]]).unsqueeze(2)
+    source = torch.tensor([[1, 2, 7], [3, 4, 5]]).unsqueeze(2)
 
     # a)
     # print(torch.tensor([, source[:, :-1].shape)

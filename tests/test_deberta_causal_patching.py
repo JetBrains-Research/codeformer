@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 import torch
-from transformers import DebertaV2Model
+from transformers import DebertaV2Model, GPT2Model, AutoConfig, GPT2Config
 
 from lm.deberta_patch import patch_deberta_causal
 from lm.model import PatchedDebertaAsCausalLM
@@ -67,6 +67,24 @@ def test_causal_patching_deberta_stand_alone_class():
     p_jac_1 = patch_jacob.abs().sum(-1).bool().long()[1, :, 1, :]
     assert torch.all(p_jac_0 == expected_jac.patch_jacob_sample_0)
     assert torch.all(p_jac_1 == expected_jac.patch_jacob_sample_1)
+
+
+def test_gpt2_is_decoder_false_non_casual():
+    device = torch.device('cpu')
+    config = GPT2Config(n_embd=768,
+                        n_layer=12,
+                        n_head=12,
+                        is_decoder=False,
+                        output_hidden_states=True,
+                        vocab_size=20_000,
+                        n_positions=1024)
+    model = GPT2Model(config)
+    model_jacob = get_test_case_jacob(model, device)
+    expected_jac = ExpectedJacobians()
+    r_jac_0 = model_jacob.abs().sum(-1).bool().long()[0, :, 0, :]
+    r_jac_1 = model_jacob.abs().sum(-1).bool().long()[1, :, 1, :]
+    assert torch.all(r_jac_0 == expected_jac.regular_jacob_sample_0)
+    assert torch.all(r_jac_1 == expected_jac.regular_jacob_sample_1)
 
 
 def get_test_case_jacob(model, device):

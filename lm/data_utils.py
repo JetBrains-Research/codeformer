@@ -53,7 +53,7 @@ class BatchedTextTokens:
                  eos_token_id: int) -> None:
         # + 2 because of bos and eos tokens
         self.max_tokens_per_split = max(s.max_tokens_per_split for s in samples) + 2
-        self.max_tokens_per_sample = max(len(s.token_ids) for s in samples) + 2
+        self.max_tokens_per_sample = max(len(s.token_ids) for s in samples)
         self.max_splits = max(s.num_splits for s in samples)
         batch_size = len(samples)
         self.token_ids_list = [s.token_ids for s in samples]
@@ -69,8 +69,10 @@ class BatchedTextTokens:
         self.bos_token_id = bos_token_id
         self.eos_token_id = eos_token_id
         for sample_num, sample in enumerate(samples):
-            n_tokens_per_sample = len(sample.token_ids) + 2
-            sample_token_ids = [self.bos_token_id] + sample.token_ids + [self.eos_token_id]
+            # n_tokens_per_sample = len(sample.token_ids) + 2
+            # sample_token_ids = [self.bos_token_id] + sample.token_ids + [self.eos_token_id]
+            n_tokens_per_sample = len(sample.token_ids)
+            sample_token_ids = sample.token_ids
             self.token_ids[sample_num, :n_tokens_per_sample] = torch.tensor(sample_token_ids, dtype=torch.long)
             cursor = 0
             for split_num, split_size in enumerate(sample.split_sizes):
@@ -84,7 +86,7 @@ class BatchedTextTokens:
 
         self.split_sizes_list = []
         for s in samples:
-            self.split_sizes_list.append([split_size + 2 for split_size in s.split_sizes])
+            self.split_sizes_list.append([split_size for split_size in s.split_sizes])
         max_splits_per_sample = max(len(l) for l in self.split_sizes_list)
         self.split_sizes_tensor = torch.zeros(batch_size, max_splits_per_sample, dtype=torch.long)
         for n in range(batch_size):
