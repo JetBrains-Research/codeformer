@@ -145,6 +145,8 @@ class BatchedTextTokens:
         return len(self.token_ids_list)
 
     def to(self, device: torch.DeviceObjType) -> "BatchedTextTokens":
+        self.token_ids_bos_eos = self.token_ids_bos_eos.to(device)
+        self.att_mask_bos_eos = self.att_mask_bos_eos.to(device)
         self.token_ids_chunk_bos_eos = self.token_ids_chunk_bos_eos.to(device)
         self.att_mask_chunk_tokens = self.att_mask_chunk_tokens.to(device)
         self.token_ids_chunk_stacked_bos_eos = self.token_ids_chunk_stacked_bos_eos.to(device)
@@ -412,7 +414,8 @@ class AllDatasetsDataModule(LightningDataModule):
                           batch_size=self.batch_size,
                           collate_fn=self.collate_wrapper,
                           prefetch_factor=self.prefetch_factor,
-                          num_workers=self.num_workers)
+                          num_workers=self.num_workers,
+                          pin_memory=True)
 
     def train_dataloader(self, *args, **kwargs) -> DataLoader:
         return self._shared_dataloader('train')
