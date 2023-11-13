@@ -8,7 +8,7 @@ from transformers import (DebertaV2Model, DebertaV2ForMaskedLM, DebertaV2Tokeniz
 from lm.data_utils import BatchedTextTokens
 from lm.deberta_patch import patch_deberta_causal
 from lm.eval_utils import metrics
-from lm.utils import get_model_module
+from lm.utils import get_model_module, is_deberta_v2_v3
 
 __all__ = ['CodeformerLM', 'PatchedDebertaAsCausalLM']
 
@@ -72,9 +72,7 @@ class CodeformerLM(nn.Module):
         return metrics(logits, batch.decoder_targ_tok_ids, batch.pad_token_id)
 
     def _get_modules(self, hf_model_name: str, do_random_init: bool) -> dict[str: nn.Module | nn.Parameter | Tensor]:
-        deberta_v2_prefix = 'microsoft/deberta-v2'
-        deberta_v3_prefix = 'microsoft/deberta-v3'
-        if hf_model_name[:len(deberta_v3_prefix)] in {deberta_v2_prefix, deberta_v3_prefix}:
+        if is_deberta_v2_v3(hf_model_name):
             if do_random_init:
                 cfg = AutoConfig.from_pretrained(hf_model_name)
                 get_model_class = partial(AutoModel.from_config, cfg)
