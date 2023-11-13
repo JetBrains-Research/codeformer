@@ -16,7 +16,9 @@ __all__ = ['CodeformerLM', 'PatchedDebertaAsCausalLM']
 class CodeformerLM(nn.Module):
     def __init__(self,
                  hf_model_name: str,
-                 do_random_init: bool) -> None:
+                 do_random_init: bool,
+                 num_context_chunks: int = 1,
+                 padded_to_max_chunks_per_sample: bool = False) -> None:
         super().__init__()
         # We do not need the token embeddings for the chunk level
         modules_dict = self._get_modules(hf_model_name, do_random_init)
@@ -24,84 +26,49 @@ class CodeformerLM(nn.Module):
         self.encoder_chunk = modules_dict['encoder_chunk']
         self.decoder = modules_dict['decoder']
         self.chunk_sos_embedding = modules_dict['chunk_sos_embedding']
+        self.padded_to_max_chunks_per_sample = padded_to_max_chunks_per_sample
+
+        self.num_context_chunks = num_context_chunks
         self.register_buffer('pad_token_id', modules_dict['pad_token_id'])
         self.pad_token_id: Tensor
 
     def forward(self, batch: BatchedTextTokens) -> dict[str, Tensor]:
         # token_ids_chunk.shape = batch_size, max_chunks, max_tokens_per_chunk
-        token_ids_chunk = batch.token_ids_chunk
-        batch_size, max_chunks, max_tokens_per_chunk = token_ids_chunk.shape
+        # token_ids_chunk_bos_eos =
+        batch_size = batch.batch_size
+        max_chunks = batch.max_chunks_per_sample
+        max_tokens_per_chunk = batch.max_tokens_per_chunk
 
         # Chunk embeddings
-        token_ids_stacked = token_ids_chunk.reshape(batch_size * max_chunks, max_tokens_per_chunk)
-        att_mask_chunk_tokens = batch.att_mask_chunk_tokens.resize_as(token_ids_stacked)
-        token_units = self.encoder_token(input_ids=token_ids_stacked,
-                                         attention_mask=att_mask_chunk_tokens).last_hidden_state
-        hidden_size = token_units.shape[2]
-        chunk_embs = token_units.reshape(batch_size, max_chunks, max_tokens_per_chunk, hidden_size)[:, :, 0, :]
 
-        # Add chunk positional encodings
-        if self.encoder_chunk.embeddings.position_embeddings is not None:
-            # We don't need positionals for DebertaV[2,3] due to the
-            # Disentangled Attention mechanism, position_embeddings attribute
-            # is None in this case
-            chunk_pos_ids = self.encoder_chunk.embeddings.position_ids[:, :max_chunks]
-            chunk_pos_embs = self.encoder_chunk.embeddings.position_embeddings(chunk_pos_ids)
-            chunk_embs = chunk_embs + chunk_pos_embs
+        if self.padded_to_max_chunks_per_sample:
+            # NOTE: performance, move next two lines to the collate function
+            token_ids_stacked = batch.token_ids_chunk_bos_eos.reshape(batch_size * max_chunks, max_tokens_per_chunk)
+            att_mask_chunk_tokens = batch.att_mask_chunk_tokens.resize_as(token_ids_stacked)
+            token_units = self.encoder_token(input_ids=token_ids_stacked,
+                                             attention_mask=att_mask_chunk_tokens).last_hidden_state
+            hidden_size = token_units.shape[2]
+            chunk_embs = token_units.reshape(batch_size, max_chunks, max_tokens_per_chunk, hidden_size)[:, :, 0, :]
+        else:
+            chunk_embs = self.encoder_token(batch.token_ids_chunk_stacked_bos_eos).last_hidden_state[:, 0, :]
+            chunk_embs = self.assemble_chunk_representations_from_stacked(chunk_embs, batch.chunk_sizes_tensor)
+
+        chunk_embs = self._add_positional_encoding(chunk_embs)
 
         # Chunk representations
         chunk_units = self.encoder_chunk(inputs_embeds=chunk_embs,
                                          attention_mask=batch.att_mask_chunks).last_hidden_state
 
+        decoder_chunk_embs = self.get_chunk_representations_for_decoder(chunk_units, batch.chunk_sizes_tensor)
         # Decoder
 
-        chunk_sos_emb = self.chunk_sos_embedding.reshape(1, 1, -1).repeat(batch_size, 1, 1)
-        chunk_units_sos = torch.cat([chunk_sos_emb, chunk_units[:, :-1]], 1)
-
-        decoder_input_embs = torch.zeros(batch_size,
-                                         max_chunks,
-                                         max_chunks + max_tokens_per_chunk,
-                                         hidden_size,
-                                         dtype=chunk_units.dtype,
-                                         device=chunk_units.device)
-
-        decoder_token_embs = get_model_module(self.decoder).embeddings(token_ids_chunk)
+        decoder_token_embs = get_model_module(self.decoder).embeddings(batch.decoder_inp_tok_ids)
         # TODO: check computations step by step
-
-        for sample_num in range(batch_size):
-            num_chunks = len(batch.split_sizes_list[sample_num])
-            for chunk_num in range(num_chunks):
-                num_tokens = batch.split_sizes_list[sample_num][chunk_num]
-                decoder_input_embs[sample_num, chunk_num, :chunk_num + 1] = chunk_units_sos[sample_num, :chunk_num + 1]
-                decoder_input_embs[
-                    sample_num,
-                    chunk_num,
-                    chunk_num + 1: chunk_num + 1 + num_tokens
-                ] = decoder_token_embs[sample_num, chunk_num, :num_tokens]
-        decoder_input_embs = decoder_input_embs.reshape(
-            batch_size * max_chunks, max_chunks + max_tokens_per_chunk, hidden_size
-        )
-        units_stacked = get_model_module(self.decoder)(inputs_embeds=decoder_input_embs).last_hidden_state
-        vocab_size = units_stacked.shape[2]
-        units_stacked = units_stacked.reshape(batch_size, max_chunks, max_chunks + max_tokens_per_chunk, vocab_size)
-
-        # Logits
-
-        # do not predict bos and predict eos
-        units_shape = [batch_size, max_chunks, max_tokens_per_chunk - 1, hidden_size]
-        units_reassembled = torch.zeros(*units_shape,
-                             device=units_stacked.device,
-                             dtype=units_stacked.dtype)
-        for sample_num in range(batch_size):
-            num_chunks = len(batch.split_sizes_list[sample_num])
-            for chunk_num in range(num_chunks):
-                num_tokens = batch.split_sizes_list[sample_num][chunk_num]
-                curr_units = units_stacked[sample_num, chunk_num, chunk_num + 1: chunk_num + 1 + num_tokens - 1]
-                units_reassembled[sample_num, chunk_num, :num_tokens - 1] = curr_units
-        # logits = torch.permute(logits, [0, 3, 1, 2])
-        logits = self.decoder.cls(units_reassembled)
-        targets = token_ids_chunk[:, :, 1:]
-        return metrics(logits, targets, batch.pad_token_id)
+        decoder_input_embs = torch.cat([decoder_chunk_embs, decoder_token_embs], dim=1)
+        decoder_units = get_model_module(self.decoder)(inputs_embeds=decoder_input_embs).last_hidden_state
+        decoder_units = decoder_units[:, self.num_context_chunks:]
+        logits = self.decoder.cls(decoder_units)
+        return metrics(logits, batch.decoder_targ_tok_ids, batch.pad_token_id)
 
     def _get_modules(self, hf_model_name: str, do_random_init: bool) -> dict[str: nn.Module | nn.Parameter | Tensor]:
         deberta_v2_prefix = 'microsoft/deberta-v2'
@@ -147,6 +114,63 @@ class CodeformerLM(nn.Module):
         min_tok_idx = 1000
         max_tok_idx = self.decoder.embeddings.word_embeddings.weight.shape[0]
         return torch.cat([input_ids, torch.randint(min_tok_idx, max_tok_idx, [1, num_predicted_tokens])], dim=1)
+
+    def _add_positional_encoding(self, chunk_embs: Tensor) -> Tensor:
+        if self.encoder_chunk.embeddings.position_embeddings is not None:
+            # We don't need positionals for DebertaV[2,3] due to the
+            # Disentangled Attention mechanism, position_embeddings attribute
+            # is None in this case
+            max_chunks = chunk_embs.shape[1]
+            chunk_pos_ids = self.encoder_chunk.embeddings.position_ids[:, :max_chunks]
+            chunk_pos_embs = self.encoder_chunk.embeddings.position_embeddings(chunk_pos_ids)
+            chunk_embs = chunk_embs + chunk_pos_embs
+        return chunk_embs
+
+    def get_chunk_representations_for_decoder(self, chunk_units: Tensor, chunk_sizes: LongTensor) -> Tensor:
+        # chunk_units.shape = batch_size, max_chunks_per_sample, hidden_size
+        #   note that chunk units have the first item in the sequence equal to the padding emb
+        # outputs.shape = num_chunks_total, num_context_chunks, hidden_size
+        num_chunks = (chunk_sizes > 0).count_nonzero()
+        batch_size, max_chunks_per_sample, hidden_size = chunk_units.shape
+        output_tensor = torch.zeros(num_chunks, self.num_context_chunks, hidden_size,
+                                    device=chunk_units.device, dtype=chunk_units.dtype)
+        count = 0
+        for sample_num in range(batch_size):
+            for chunk_num in range(max_chunks_per_sample):
+                if chunk_sizes[sample_num, chunk_num] > 0:
+                    indices = [max(0, n) for n in range(chunk_num - self.num_context_chunks, chunk_num)]
+                    output_tensor[count] = chunk_units[sample_num, indices]
+                    count += 1
+        return output_tensor
+
+    def assemble_chunk_representations_from_stacked(self,
+                                                    stacked_chunk_units: Tensor,
+                                                    chunk_sizes: LongTensor) -> Tensor:
+        # stacked_chunk_units.shape = num_chunks_total, hidden_size
+        # chunk_sizes.shape = batch_size, max_chunks_per_sample
+        batch_size, max_chunks_per_sample = chunk_sizes.shape
+        hidden_size = stacked_chunk_units.shape[1]
+        # -1 because of sos
+        chunk_units = torch.zeros(batch_size, max_chunks_per_sample - 1, hidden_size,
+                                  device=stacked_chunk_units.device, dtype=stacked_chunk_units.dtype)
+        count = 0
+        # NOTE: can be precomputed
+        num_chunks = (chunk_sizes > 0).sum(1).tolist()
+        for sample_num in range(batch_size):
+            cur_num_chunks = num_chunks[sample_num] - 1
+            chunk_units[sample_num, :cur_num_chunks] = stacked_chunk_units[count: count + cur_num_chunks]
+            count += cur_num_chunks
+        chunk_sos_emb = self.chunk_sos_embedding.reshape(1, 1, -1).repeat(batch_size, 1, 1)
+        chunk_units_sos = torch.cat([chunk_sos_emb, chunk_units], 1)
+        return chunk_units_sos
+
+    def assemble_chunk_representations_from_uniform(self,
+                                                    chunk_units: Tensor,
+                                                    chunk_sizes: LongTensor) -> Tensor:
+        batch_size = chunk_sizes.shape[0]
+        chunk_sos_emb = self.chunk_sos_embedding.reshape(1, 1, -1).repeat(batch_size, 1, 1)
+        chunk_units_sos = torch.cat([chunk_sos_emb, chunk_units[:, :-1]], 1)
+        return chunk_units_sos
 
 
 class PatchedDebertaAsCausalLM(DebertaV2ForMaskedLM):
