@@ -25,6 +25,7 @@ prefetch_factor: 32
 batch_size: 4
 
 model_name: deberta_causal
+tokenizer_name: null
 base_model_name: microsoft/deberta-v3-small
 random_init: false
 

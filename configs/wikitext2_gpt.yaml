@@ -26,6 +26,7 @@ prefetch_factor: 32
 batch_size: 4
 
 model_name: gpt2
+tokenizer_name: null
 base_model_name: null
 random_init: false
 
