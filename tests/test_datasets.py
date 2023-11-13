@@ -38,3 +38,29 @@ def test_wikitext_data_module(dataset_name):
                                MIN_CHUNKS, num_workers=0, prefetch_factor=None)
     train_dl = dm.train_dataloader()
     batch = next(iter(train_dl))
+
+
+def test_batch_class():
+    sample_0 = TextTokens([1, 2, 3, 4, 5], [2, 2, 1])
+    sample_1 = TextTokens([6, 7, 8], [1, 2])
+    samples = [sample_0, sample_1]
+    num_previous_chunks = 1
+    pad_token_id = 0
+    bos_token_id = -1
+    eos_token_id = -2
+    batch = BatchedTextTokens(samples, pad_token_id, bos_token_id, eos_token_id, num_previous_chunks)
+    print(batch.decoder_inp_tok_ids)
+    assert torch.all(batch.decoder_inp_tok_ids == torch.tensor([
+        [-1, 1, 2, 0, 0],
+        [-1, 1, 2, 3, 4],
+        [-1, 3, 4, 5, 0],
+        [-1, 6, 0, 0, 0],
+        [-1, 6, 7, 8, 0]
+    ]))
+    assert torch.all(batch.decoder_targ_tok_ids == torch.tensor([
+        [1, 2, -2, 0, 0],
+        [0, 0, 3, 4, -2],
+        [0, 0, 5, -2, 0],
+        [6, -2, 0, 0, 0],
+        [0, 7, 8, -2, 0]
+    ]))
