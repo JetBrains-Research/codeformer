@@ -52,6 +52,7 @@ class CodeformerLM(nn.Module):
         else:
             chunk_embs = self.encoder_token(batch.token_ids_chunk_stacked_bos_eos).last_hidden_state[:, 0, :]
             chunk_embs = self.assemble_chunk_representations_from_stacked(chunk_embs, batch.chunk_sizes_tensor)
+        # TODO: check both cases above on bos chunk
 
         chunk_embs = self._add_positional_encoding(chunk_embs)
 
