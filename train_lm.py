@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import hydra
+from omegaconf import OmegaConf
 import torch
 from transformers import get_linear_schedule_with_warmup, get_constant_schedule
 from tqdm import tqdm
@@ -15,7 +18,11 @@ from lm.utils import (setup_wandb, get_tokenizer_from_config,
 @hydra.main('configs', 'wikitext2', version_base=None)
 def main(args):
     print(args)
-
+    save_dir = Path('/mnt/data2/arkhipov/models/codeformer')
+    model_save_path = save_dir / (args.name + '.pt')
+    config_save_path = save_dir / (args.name + '.yaml')
+    with open(config_save_path, 'w') as fp:
+        OmegaConf.save(args, fp)
     setup_wandb(args)
     assert args.accumulated_batch_size % args.batch_size == 0
     accumulation_factor = args.accumulated_batch_size // args.batch_size
@@ -57,6 +64,9 @@ def main(args):
     eval_results = evaluate(model, dl_valid, device, 'val', preprocessor, postprocessor)
     eval_results['epoch'] = 0
     print('Val scores: ', eval_results)
+    best_ppl = eval_results['val_ppl']
+    torch.save(model.state_dict(), model_save_path)
+
     wandb.log(eval_results)
 
     processed_batches = 0
@@ -82,7 +92,12 @@ def main(args):
             processed_batches += 1
         eval_results = evaluate(model, dl_valid, device, 'val', preprocessor, postprocessor)
         eval_results['epoch'] = epoch + 1
-        print('Val scores: ', eval_results)
+        if eval_results['val_ppl'] < best_ppl:
+            print('New best PPL. Val scores: ', eval_results)
+            torch.save(model.state_dict(), model_save_path)
+            best_ppl = eval_results['val_ppl']
+        else:
+            print('Val scores: ', eval_results)
         wandb.log(eval_results)
     eval_results = evaluate(model, dl_test, device, 'test', preprocessor, postprocessor)
     print('Test scores: ', eval_results)
