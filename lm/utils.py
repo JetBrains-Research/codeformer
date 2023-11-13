@@ -85,8 +85,8 @@ def get_train_batch_preprocessor(config: str | Path | OmegaConf) -> callable:
 
 def train_batch_preprocessor_hf(batch: BatchedTextTokens, device: torch.DeviceObjType) -> dict[str, Tensor]:
     input_dict = {
-        'input_ids': batch.token_ids,
-        'attention_mask': batch.att_mask,
+        'input_ids': batch.token_ids_bos_eos,
+        'attention_mask': batch.att_mask_bos_eos,
     }
     return dict_to_device(input_dict, device)
 
@@ -101,7 +101,7 @@ def get_model_output_postprocessor(config: str | Path | OmegaConf) -> callable:
 
 
 def model_output_postprocessor_hf(batch: BatchedTextTokens, outputs: BaseModelOutput) -> dict[str, Tensor]:
-    targets = batch.token_ids[:, 1:]
+    targets = batch.token_ids_bos_eos[:, 1:]
     logits = outputs.logits[:, :-1].reshape(-1, outputs.logits.shape[2])
     return metrics(logits, targets, batch.pad_token_id)
 
