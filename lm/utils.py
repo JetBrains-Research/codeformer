@@ -62,15 +62,21 @@ def dump_wikitext_dataset(dump_dir: str | Path | None = None) -> None:
 def get_tokenizer_from_config(config: str | Path | OmegaConf) -> Tokenizer:
     if isinstance(config, (str, Path)):
         config = OmegaConf.load(config)
-
-    if config.model_name in {'codeformer', 'deberta_causal'}:
-        name = config.base_model_name
+    if config.tokenizer_name is not None:
+        name = config.tokenizer_name
     else:
-        name = config.model_name
+        if config.model_name in {'codeformer', 'deberta_causal'}:
+            name = config.base_model_name
+        else:
+            name = config.model_name
     tokenizer = AutoTokenizer.from_pretrained(name)
     if name == 'gpt2':
-        print('Warning! Populating pad token!')
-        tokenizer.pad_token_id = tokenizer.eos_token_id
+        special_tokens_dict = {
+            'bos_token': '<|beginingoftext|>',
+            'pad_token': '<|padtoken|>',
+            'unk_token': '<|unktoken|>',
+        }
+        tokenizer.add_special_tokens(special_tokens_dict)
     return tokenizer
 
 
@@ -117,16 +123,31 @@ def dict_to_device(input_dict: dict[str, Tensor | int | float],
 
     return on_device_dict
 
+def is_deberta_v2_v3(model_name: str) -> bool:
+    deberta_v2_prefix = 'microsoft/deberta-v2'
+    deberta_v3_prefix = 'microsoft/deberta-v3'
+    return model_name[:len(deberta_v3_prefix)] in {deberta_v2_prefix, deberta_v3_prefix}
 
-def get_model_from_config(config: str | Path | OmegaConf) -> nn.Module:
+
+def get_model_from_config(config: str | Path | OmegaConf,
+                          tokenizer: Tokenizer) -> nn.Module:
     # config: either a path to a YAML file or an OmegaConf constructed
     # from the YAML
+    num_tokens = len(tokenizer.vocab)
     if isinstance(config, (str, Path)):
         config = OmegaConf.load(config)
     if config.model_name == 'codeformer':
         from lm.model import CodeformerLM
+        original_tokenizer = AutoTokenizer.from_pretrained(config.base_model_name)
+        num_tokens_original = len(original_tokenizer.vocab)
         model = CodeformerLM(config.base_model_name, do_random_init=config.random_init)
+        if num_tokens_original != num_tokens:
+            model.encoder_token.resize_token_embeddings(num_tokens)
+            model.decoder.resize_token_embeddings(num_tokens)
+            print(f'Resized model embeddings to: {num_tokens}')
     else:
+        original_tokenizer = AutoTokenizer.from_pretrained(config.model_name)
+        num_tokens_original = len(original_tokenizer.vocab)
         if config.model_name == 'deberta_causal':
             from lm.model import PatchedDebertaAsCausalLM
             model = PatchedDebertaAsCausalLM.from_pretrained(config.base_model_name)
@@ -137,6 +158,9 @@ def get_model_from_config(config: str | Path | OmegaConf) -> nn.Module:
                 model.load_state_dict(torch.load(config.load_path, map_location='cpu'))
         for module in model.modules():
             model._init_weights(module)
+        if num_tokens_original != num_tokens:
+            model.resize_token_embeddings(num_tokens)
+            print(f'Resized model embeddings to: {num_tokens}')
     return model
 
 
