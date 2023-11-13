@@ -17,8 +17,8 @@ def main(args):
     print(args)
 
     setup_wandb(args)
-    assert args.accumulated_batch_size % args.data_params.batch_size == 0
-    accumulation_factor = args.accumulated_batch_size // args.data_params.batch_size
+    assert args.accumulated_batch_size % args.batch_size == 0
+    accumulation_factor = args.accumulated_batch_size // args.batch_size
 
     # TODO: write parameters gathering for weight_decay
     assert args.weight_decay == 0.0
@@ -32,8 +32,17 @@ def main(args):
     preprocessor = get_train_batch_preprocessor(args)
     postprocessor = get_model_output_postprocessor(args)
 
-    dl_train, dl_valid, dl_test = AllDatasetsDataModule(tokenizer=tokenizer, **args.data_params).get_dataloaders()
-
+    dl_train, dl_valid, dl_test = AllDatasetsDataModule(tokenizer=tokenizer,
+                                                        dataset_name=args.dataset_name,
+                                                        max_text_tokens=args.max_text_tokens,
+                                                        max_chunk_size=args.max_chunk_size,
+                                                        max_chunks_number=args.max_chunks_number,
+                                                        num_previous_chunks=args.num_previous_chunks,
+                                                        min_tokens=args.min_tokens,
+                                                        min_chunks=args.min_chunks,
+                                                        num_workers=args.num_workers,
+                                                        prefetch_factor=args.prefetch_factor,
+                                                        batch_size=args.batch_size).get_dataloaders()
     model.train()
     opt = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
     total_steps = len(dl_train) * args.epochs

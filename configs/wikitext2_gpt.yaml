@@ -14,16 +14,16 @@ scheduler: null
 warmup_part: 0.03
 
 #max_text_tokens: 1048576  # 2 ** 20
-data_params:
-  dataset_name: wikitext2raw
-  max_text_tokens: 1022
-  max_chunk_size: 14
-  max_chunks_number: 32
-  min_tokens: 1
-  min_chunks: 1
-  num_workers: 8
-  prefetch_factor: 32
-  batch_size: 4
+dataset_name: wikitext2raw
+max_text_tokens: 1022
+max_chunk_size: 14
+num_previous_chunks: 1
+max_chunks_number: 32
+min_tokens: 1
+min_chunks: 1
+num_workers: 8
+prefetch_factor: 32
+batch_size: 4
 
 model_name: gpt2
 base_model_name: null
