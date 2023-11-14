@@ -140,7 +140,7 @@ def get_model_from_config(config: str | Path | OmegaConf,
         from lm.model import CodeformerLM
         original_tokenizer = AutoTokenizer.from_pretrained(config.base_model_name)
         num_tokens_original = len(original_tokenizer.vocab)
-        model = CodeformerLM(config.base_model_name, do_random_init=config.random_init)
+        model = CodeformerLM(config.base_model_name, config.random_init, config.num_context_chunks)
         if num_tokens_original != num_tokens:
             model.encoder_token.resize_token_embeddings(num_tokens)
             model.decoder.resize_token_embeddings(num_tokens)
