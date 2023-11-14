@@ -15,6 +15,7 @@ warmup_part: 0.03
 
 dataset_name: wikitext2raw
 max_text_tokens: 1048576 # 2 ** 20
+num_context_chunks: 1
 max_chunk_size: 14
 max_chunks_number: 32
 num_previous_chunks: 1
