@@ -33,11 +33,6 @@ random_init: false
 
 dbg: false
 verbose: true
-train_steps: 64000
-evaluate_every: epoch  # 1000 or 1 or any num step
-use_batch_norm: false
-full_batch_val: true
-
 
 load_path: null
 #load_path: /mnt/data/shared-data/codeformer/models/rand_init_codeformer.pt
