@@ -1,3 +1,4 @@
+from line_profiler import profile
 from functools import partial
 
 import torch
@@ -32,6 +33,7 @@ class CodeformerLM(nn.Module):
         self.register_buffer('pad_token_id', modules_dict['pad_token_id'])
         self.pad_token_id: Tensor
 
+    @profile
     def forward(self, batch: BatchedTextTokens) -> dict[str, Tensor]:
         # token_ids_chunk.shape = batch_size, max_chunks, max_tokens_per_chunk
         # token_ids_chunk_bos_eos =
@@ -39,32 +41,32 @@ class CodeformerLM(nn.Module):
         max_chunks = batch.max_chunks_per_sample
         max_tokens_per_chunk = batch.max_tokens_per_chunk
 
-        # Chunk embeddings
+        # Token encoder
 
         if self.padded_to_max_chunks_per_sample:
-            # NOTE: performance, move next two lines to the collate function
+            # note: performance, move next two lines to the collate function
             token_ids_stacked = batch.token_ids_chunk_bos_eos.reshape(batch_size * max_chunks, max_tokens_per_chunk)
             att_mask_chunk_tokens = batch.att_mask_chunk_tokens.resize_as(token_ids_stacked)
             token_units = self.encoder_token(input_ids=token_ids_stacked,
-                                             attention_mask=att_mask_chunk_tokens).last_hidden_state
+                                             attention_mask=att_mask_chunk_tokens).last_hidden_state[:, :, 0, :]
             hidden_size = token_units.shape[2]
-            chunk_embs = token_units.reshape(batch_size, max_chunks, max_tokens_per_chunk, hidden_size)[:, :, 0, :]
         else:
             chunk_embs = self.encoder_token(batch.token_ids_chunk_stacked_bos_eos).last_hidden_state[:, 0, :]
-            chunk_embs = self.assemble_chunk_representations_from_stacked(chunk_embs, batch.chunk_sizes_tensor)
         # TODO: check both cases above on bos chunk
 
-        chunk_embs = self._add_positional_encoding(chunk_embs)
+        # Chunk encoder
 
-        # Chunk representations
+        chunk_embs = self._add_positional_encoding(chunk_embs)
+        if self.padded_to_max_chunks_per_sample:
+            chunk_embs = token_units.reshape(batch_size, max_chunks, max_tokens_per_chunk, hidden_size)
+        else:
+            chunk_embs = self.assemble_chunk_representations_from_stacked(chunk_embs, batch.chunk_sizes_tensor)
         chunk_units = self.encoder_chunk(inputs_embeds=chunk_embs,
                                          attention_mask=batch.att_mask_chunks).last_hidden_state
 
-        decoder_chunk_embs = self.get_chunk_representations_for_decoder(chunk_units, batch.chunk_sizes_tensor)
         # Decoder
-
+        decoder_chunk_embs = self.get_chunk_representations_for_decoder(chunk_units, batch.chunk_sizes_tensor)
         decoder_token_embs = get_model_module(self.decoder).embeddings(batch.decoder_inp_tok_ids)
-        # TODO: check computations step by step
         decoder_input_embs = torch.cat([decoder_chunk_embs, decoder_token_embs], dim=1)
         decoder_units = get_model_module(self.decoder)(inputs_embeds=decoder_input_embs).last_hidden_state
         decoder_units = decoder_units[:, self.num_context_chunks:]
