@@ -47,9 +47,9 @@ class CodeformerLM(nn.Module):
             # note: performance, move next two lines to the collate function
             token_ids_stacked = batch.token_ids_chunk_bos_eos.reshape(batch_size * max_chunks, max_tokens_per_chunk)
             att_mask_chunk_tokens = batch.att_mask_chunk_tokens.resize_as(token_ids_stacked)
-            token_units = self.encoder_token(input_ids=token_ids_stacked,
-                                             attention_mask=att_mask_chunk_tokens).last_hidden_state[:, :, 0, :]
-            hidden_size = token_units.shape[2]
+            chunk_embs = self.encoder_token(input_ids=token_ids_stacked,
+                                            attention_mask=att_mask_chunk_tokens).last_hidden_state[:, :, 0, :]
+            hidden_size = chunk_embs.shape[2]
         else:
             chunk_embs = self.encoder_token(batch.token_ids_chunk_stacked_bos_eos).last_hidden_state[:, 0, :]
         # TODO: check both cases above on bos chunk
@@ -58,7 +58,7 @@ class CodeformerLM(nn.Module):
 
         chunk_embs = self._add_positional_encoding(chunk_embs)
         if self.padded_to_max_chunks_per_sample:
-            chunk_embs = token_units.reshape(batch_size, max_chunks, max_tokens_per_chunk, hidden_size)
+            chunk_embs = chunk_embs.reshape(batch_size, max_chunks, max_tokens_per_chunk, hidden_size)
         else:
             chunk_embs = self.assemble_chunk_representations_from_stacked(chunk_embs, batch.chunk_sizes_tensor)
         chunk_units = self.encoder_chunk(inputs_embeds=chunk_embs,
