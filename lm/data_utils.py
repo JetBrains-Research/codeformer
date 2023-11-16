@@ -3,6 +3,7 @@ from typing import List, Optional
 from dataclasses import dataclass
 
 from datasets import load_dataset
+import numpy as np
 from pytorch_lightning import LightningDataModule
 from tokenizers import Tokenizer
 import torch
@@ -440,3 +441,37 @@ class AllDatasetsDataModule(LightningDataModule):
 
     def get_dataloaders(self):
         return self.train_dataloader(), self.val_dataloader(), self.test_dataloader()
+
+
+class DummyDataset(Dataset):
+    def __int__(self,
+                tokenizer: Tokenizer,
+                max_text_tokens: int,
+                max_chunks_number: int,
+                max_chunk_size: int,
+                num_previous_chunks: int,
+                min_chunks: int | None,
+                min_tokens: int | None,
+                num_samples: int = 1024):
+        self.tokenizer = tokenizer
+        self.max_text_tokens = max_text_tokens
+        self.max_chunks_number = max_chunks_number
+        self.max_chunk_size = max_chunk_size
+        self.num_previous_chunks = num_previous_chunks
+        self.min_chunks = min_chunks
+        self.min_tokens = min_tokens
+        self.num_samples = num_samples
+        possible_ids = [idx for idx in range(len(tokenizer.vocab)) if idx != tokenizer.pad_token_id]
+        self.samples = []
+        for n in range(num_samples):
+            token_ids = np.random.choice(possible_ids, max_text_tokens).tolist()
+            num_full_chunks = max_text_tokens // max_chunk_size
+            remainder = max_text_tokens - num_full_chunks * max_chunk_size
+            chunk_sizes = [max_chunk_size] *  num_full_chunks + ([] if remainder else [remainder])
+            self.samples.append(TextTokens(token_ids, chunk_sizes))
+
+    def __len__(self) -> int:
+        return self.num_samples
+
+    def __getitem__(self, idx):
+        return self.samples[idx]
